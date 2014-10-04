@@ -10,4 +10,10 @@ public class Knight implements IPiece {
     public List<SquareCoordinates> getAttackedSquares(int x, int y, int width, int height) {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "N";
+    }
+
 }
