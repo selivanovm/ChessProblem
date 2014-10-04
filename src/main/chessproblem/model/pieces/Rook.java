@@ -1,27 +1,16 @@
-package main.chessproblem.model.pieces;
+package chessproblem.model.pieces;
 
-import main.chessproblem.model.IPiece;
-import main.chessproblem.model.SquareCoordinates;
+import chessproblem.model.SquareCoordinates;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class Rook implements IPiece {
-    List<SquareCoordinates> result = new LinkedList<>();
+public class Rook extends AbstractPiece {
 
     @Override
     public List<SquareCoordinates> getAttackedSquares(int x, int y, int width, int height) {
-        result.clear();
-        for (int i = 0; i < width; i++) {
-            if (y != x) {
-                result.add(new SquareCoordinates(i, y));
-            }
-        }
-        for (int j = 0; j < height; j++) {
-            if (j != y) {
-                result.add(new SquareCoordinates(x, j));
-            }
-        }
+        List<SquareCoordinates> result = new LinkedList<>();
+        addFullCross(result, x, y, width, height);
         return result;
     }
 

@@ -1,4 +1,4 @@
-package main.chessproblem.model;
+package chessproblem.model;
 
 public class SquareCoordinates {
     final int x;

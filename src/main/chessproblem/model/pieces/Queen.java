@@ -1,14 +1,18 @@
-package main.chessproblem.model.pieces;
+package chessproblem.model.pieces;
 
-import main.chessproblem.model.IPiece;
-import main.chessproblem.model.SquareCoordinates;
+import chessproblem.model.SquareCoordinates;
 
+import java.util.LinkedList;
 import java.util.List;
 
-public class Queen implements IPiece {
+public class Queen extends AbstractPiece {
+
     @Override
     public List<SquareCoordinates> getAttackedSquares(int x, int y, int width, int height) {
-        return null;
+        List<SquareCoordinates> result = new LinkedList<>();
+        addFullCross(result, x, y, width, height);
+        addFullDiagonalCross(result, x, y, width, height);
+        return result;
     }
 
     @Override

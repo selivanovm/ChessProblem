@@ -1,4 +1,4 @@
-package main.chessproblem.model;
+package chessproblem.model;
 
-public interface ISquareState {
+interface ISquareState {
 }

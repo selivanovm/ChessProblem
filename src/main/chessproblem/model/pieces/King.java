@@ -1,30 +1,21 @@
-package main.chessproblem.model.pieces;
+package chessproblem.model.pieces;
 
-import main.chessproblem.model.IPiece;
-import main.chessproblem.model.SquareCoordinates;
+import chessproblem.model.SquareCoordinates;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class King implements IPiece {
-    private List<SquareCoordinates> result = new LinkedList<>();
+public class King extends AbstractPiece {
+
     @Override
     public List<SquareCoordinates> getAttackedSquares(int x, int y, int width, int height) {
-        result.clear();
-        if (x < width - 1) {
-            result.add(new SquareCoordinates(x + 1, y));
+        List<SquareCoordinates> result = new LinkedList<>();
+        for (int i = -1; i < 2; i++) {
+            addSquare(result, x + 1, y + i, width, height);
+            addSquare(result, x - 1, y + i, width, height);
         }
-        if (x > 0) {
-            result.add(new SquareCoordinates(x - 1, y));
-        }
-
-        if (y < height - 1) {
-            result.add(new SquareCoordinates(x, y + 1));
-        }
-
-        if (y > 0) {
-            result.add(new SquareCoordinates(x, y - 1));
-        }
+        addSquare(result, x, y - 1, width, height);
+        addSquare(result, x, y + 1, width, height);
         return result;
     }
 

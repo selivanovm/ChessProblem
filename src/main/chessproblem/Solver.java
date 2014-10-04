@@ -1,85 +1,64 @@
-package main.chessproblem;
+package chessproblem;
 
-import main.chessproblem.model.Board;
-import main.chessproblem.model.IPiece;
-import main.chessproblem.model.pieces.*;
+import chessproblem.model.Board;
+import chessproblem.model.IPiece;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
-public class Solver {
+class Solver {
 
-    public void solve(List<IPiece> pieces, int width, int height) {
-        System.out.println("Complexity is : " + (pieces.size() * Math.pow(width * height, pieces.size())));
-        Board board = new Board(width, height);
+    private final Set<String> boardPrefixCache = new ConcurrentSkipListSet<>();
 
-        List<Class> piecesClasses = new LinkedList<Class>() {{ add(Bishop.class); add(King.class); add(Knight.class); add(Queen.class); add(Rook.class); }};
-        List<IPiece> startPieces = new LinkedList<>();
-        for(Class pc : piecesClasses) {
-            IPiece p = takePieceOfType(pieces, pc);
-            if (p != null) {
-                startPieces.add(p);
-            }
-        }
+    public List<Board> solve(List<IPiece> pieces, int width, int height) {
+        System.out.println(pieces);
 
-
+        AtomicInteger counter = new AtomicInteger(0);
         List<Board> results = new LinkedList<>();
-        int result = 0;
-        for (IPiece p : startPieces) {
-            Queue<IPiece> pieceQueue = new LinkedBlockingQueue<>();
-            pieceQueue.addAll(pieces);
-            pieceQueue.add(p);
-            System.out.println("PiecesNumber : " + pieces.size());
-            System.out.println("Starting with : " + p.toString());
-            result += loop(width, height, board, pieceQueue, 0, results);
-        }
-        System.out.println("Loop count is : " + result);
+        loop(new Board(width, height), pieces, counter, results);
+
+        System.out.println("Loop count is : " + counter.get());
         System.out.println("Solution size: " + results.size());
 
-        for(Board b : results) {
-            b.print();
+        for (Board b : results) {
+            System.out.print(b.toString());
             System.out.println("=========");
         }
+        return results;
     }
 
-    private int loop(int width, int height, Board board, Queue<IPiece> pieceQueue, int counter, List<Board> results) {
-        while (!pieceQueue.isEmpty()) {
-            IPiece piece = pieceQueue.poll();
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    Board newBoard = board.putPiece(piece, x, y);
-                    if (newBoard != null) {
-                        if (pieceQueue.isEmpty()) {
-                            results.add(newBoard);
-                        } else {
-                            Queue<IPiece> newPieceQueue = new LinkedBlockingQueue<>();
-                            newPieceQueue.addAll(pieceQueue);
-                            counter = loop(width, height, newBoard, newPieceQueue, counter, results);
+    private void loop(Board board, List<IPiece> piecesList, AtomicInteger counter, List<Board> results) {
+        if (counter.incrementAndGet() % 1000_000 == 0) {
+            System.out.println(counter.get() + " > " + boardPrefixCache.size());
+        }
+
+        if (piecesList.isEmpty()) {
+            String positionPrefix = board.getBoardHashString();
+            synchronized (boardPrefixCache) {
+                if (!boardPrefixCache.contains(positionPrefix)) {
+                    results.add(board);
+                    boardPrefixCache.add(positionPrefix);
+                }
+            }
+        } else {
+            Set<Class<?>> pieceClasses = new HashSet<>();
+            piecesList.parallelStream().forEach((startPiece) -> {
+                if (!pieceClasses.contains(startPiece.getClass())) {
+                    pieceClasses.add(startPiece.getClass());
+
+                    List<IPiece> newPiecesList = piecesList.stream().filter(p -> p != startPiece).collect(Collectors.toList());
+                    for (int x = 0; x < board.width; x++) {
+                        for (int y = 0; y < board.height; y++) {
+                            Board newBoard = board.putPiece(startPiece, x, y);
+                            if (newBoard != null) {
+                                loop(newBoard, new LinkedList<>(newPiecesList), counter, results);
+                            }
                         }
                     }
                 }
-            }
+            });
         }
-        if (counter % 1000_000 == 0) {
-            System.out.println(counter);
-        }
-        return counter + 1;
-    }
-
-    private IPiece takePieceOfType(List<IPiece> pieces, Class<IPiece> pieceClass) {
-        IPiece result = null;
-        for(IPiece p : pieces) {
-            if (p.getClass() == pieceClass) {
-                result = p;
-                break;
-            }
-        }
-        if (result != null) {
-            pieces.remove(result);
-        }
-        return result;
     }
 }
