@@ -1,10 +1,8 @@
 package chessproblem.model;
 
-import chessproblem.model.pieces.AbstractPiece;
 import chessproblem.util.BitUtil;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class Board {
     public final byte width;
@@ -18,6 +16,7 @@ public class Board {
     private final int guardedBackDiagonals;
 
     private String representation;
+    private int piecesOnBoard = 0;
 
     public Board(byte width, byte height) {
         this.width = width;
@@ -39,6 +38,7 @@ public class Board {
         this.verticalGuardedLines = newVGLines;
         this.guardedDiagonals = newGDiagonals;
         this.guardedBackDiagonals = newGBDiagonals;
+        this.piecesOnBoard++;
     }
 
     /**
@@ -57,7 +57,7 @@ public class Board {
             short[] attackVectors = piece.getAttackedSquares(x, y, this);
             for (int i = 0; i < attackVectors.length; i++) {
                 short v = attackVectors[i];
-                if (v == AbstractPiece.COORDINATES_BUFFER_TERMINAL_NUMBER) {
+                if (v == CoordinatesBuffer.COORDINATES_BUFFER_TERMINAL_NUMBER) {
                     break;
                 }
                 byte attackedSquareX = BitUtil.getFirstByteFromShort(v);
@@ -75,7 +75,7 @@ public class Board {
 
             for (int i = 0; i < attackVectors.length; i++) {
                 short v = attackVectors[i];
-                if (v == AbstractPiece.COORDINATES_BUFFER_TERMINAL_NUMBER) {
+                if (v == CoordinatesBuffer.COORDINATES_BUFFER_TERMINAL_NUMBER) {
                     break;
                 }
                 newBoardArray[
@@ -183,5 +183,9 @@ public class Board {
 
     private int getBoardPosition(int x, int y) {
         return x * height + y;
+    }
+
+    public int getPiecesOnBoard() {
+        return piecesOnBoard;
     }
 }

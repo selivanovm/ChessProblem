@@ -1,22 +1,22 @@
 package chessproblem.model.pieces;
 
 import chessproblem.model.Board;
-import chessproblem.model.SquareCoordinates;
+import chessproblem.model.CoordinatesBuffer;
 import chessproblem.model.SquareStateEnum;
 
 public class Queen extends AbstractPiece {
 
-    public Queen(byte boardWidth, byte boardHeight) {
-        super(true, true, SquareStateEnum.Queen, boardWidth, boardHeight);
+    public Queen(CoordinatesBuffer coordinatesBuffer) {
+        super(true, true, SquareStateEnum.Queen, coordinatesBuffer);
     }
 
     @Override
     public short[] getAttackedSquares(int x, int y, Board board) {
-        resetCoordinatesBuffer();
+        coordinatesBuffer.resetCoordinatesBuffer();
         addFullCross(x, y, board.width, board.height);
         addFullDiagonalCross(x, y, board.width, board.height);
-        sealCoordinatesBuffer();
-        return coordinatesBuffer.get();
+        coordinatesBuffer.sealCoordinatesBuffer();
+        return coordinatesBuffer.getCoordinatesBuffer();
     }
 
     @Override

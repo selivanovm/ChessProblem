@@ -1,20 +1,21 @@
 package chessproblem.model.pieces;
 
 import chessproblem.model.Board;
+import chessproblem.model.CoordinatesBuffer;
 import chessproblem.model.SquareStateEnum;
 
 public class Bishop extends AbstractPiece {
 
-    public Bishop(byte boardWidth, byte boardHeight) {
-        super(false, true, SquareStateEnum.Bishop, boardWidth, boardHeight);
+    public Bishop(CoordinatesBuffer coordinatesBuffer) {
+        super(false, true, SquareStateEnum.Bishop, coordinatesBuffer);
     }
 
     @Override
     public short[] getAttackedSquares(int x, int y, Board board) {
-        resetCoordinatesBuffer();
+        coordinatesBuffer.resetCoordinatesBuffer();
         addFullDiagonalCross(x, y, board.width, board.height);
-        sealCoordinatesBuffer();
-        return coordinatesBuffer.get();
+        coordinatesBuffer.sealCoordinatesBuffer();
+        return coordinatesBuffer.getCoordinatesBuffer();
     }
 
     @Override

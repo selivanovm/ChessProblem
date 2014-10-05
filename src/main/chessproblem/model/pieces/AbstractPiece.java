@@ -1,24 +1,18 @@
 package chessproblem.model.pieces;
 
+import chessproblem.model.CoordinatesBuffer;
 import chessproblem.model.IPiece;
-import chessproblem.model.SquareCoordinates;
 import chessproblem.model.SquareStateEnum;
 import chessproblem.util.BitUtil;
 
-import java.util.List;
-
 public abstract class AbstractPiece implements IPiece {
-    public static final short COORDINATES_BUFFER_TERMINAL_NUMBER = BitUtil.packBytesToShort((byte) -1, (byte) -1);
-
-    final ThreadLocal<short[]> coordinatesBuffer = new ThreadLocal<>();
-    final ThreadLocal<Integer> coordinatesBufferPosition = new ThreadLocal<>();
-
     final int checkPriority;
     final boolean guardsLines;
     final boolean guardsDiagonals;
     final SquareStateEnum squareState;
+    final CoordinatesBuffer coordinatesBuffer;
 
-    AbstractPiece(boolean guardsLines, boolean guardsDiagonals, SquareStateEnum squareState, byte boardWidth, byte boardHeight) {
+    AbstractPiece(boolean guardsLines, boolean guardsDiagonals, SquareStateEnum squareState, CoordinatesBuffer coordinatesBuffer) {
         this.guardsLines = guardsLines;
         this.guardsDiagonals = guardsDiagonals;
         this.squareState = squareState;
@@ -30,42 +24,17 @@ public abstract class AbstractPiece implements IPiece {
         if (guardsDiagonals) pieceCheckPriority += 1;
         this.checkPriority = pieceCheckPriority;
 
-        this.coordinatesBuffer.set(new short[2 * (boardWidth + boardHeight)]);
-        this.coordinatesBufferPosition.set(0);
-    }
-
-    void resetCoordinatesBuffer() {
-        this.coordinatesBufferPosition.set(0);
-    }
-
-    void sealCoordinatesBuffer() {
-        int pos = this.coordinatesBufferPosition.get();
-        short[] buffer = this.coordinatesBuffer.get();
-        if (pos < buffer.length) {
-            writeToCoordinatesBuffer(pos, COORDINATES_BUFFER_TERMINAL_NUMBER);
-        }
+        this.coordinatesBuffer = coordinatesBuffer;
     }
 
     void addSquare(int x, int y, byte boardWidth, byte boardHeight) {
-        int pos = coordinatesBufferPosition.get();
         if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight) {
-            writeToCoordinatesBuffer(pos, BitUtil.packBytesToShort((byte) x, (byte) y));
+            coordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort((byte) x, (byte) y));
         }
     }
 
     void addSquareNoChecks(byte x, byte y) {
-        writeToCoordinatesBuffer(BitUtil.packBytesToShort(x, y));
-    }
-
-    private void writeToCoordinatesBuffer(int position, short value) {
-        coordinatesBuffer.get()[position] = value;
-        coordinatesBufferPosition.set(position + 1);
-    }
-
-    private void writeToCoordinatesBuffer(short value) {
-        int pos = coordinatesBufferPosition.get();
-        coordinatesBuffer.get()[pos] = value;
-        coordinatesBufferPosition.set(pos + 1);
+        coordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort(x, y));
     }
 
     void addFullCross(int x, int y, int width, int height) {
@@ -128,4 +97,5 @@ public abstract class AbstractPiece implements IPiece {
     public int hashCode() {
         return squareState.hashCode();
     }
+
 }

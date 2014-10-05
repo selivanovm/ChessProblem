@@ -39,6 +39,7 @@ public class Main {
 
 
     private static void testCase1() {
+        System.out.println("Start Test #1");
         List<IPiece> pieces = new PiecesListBuilder(3, 3)
                 .addPieces(King.class, 2)
                 .addPieces(Rook.class, 1)
@@ -59,6 +60,7 @@ public class Main {
     }
 
     private static void testCase2() {
+        System.out.println("Start Test #2");
         List<IPiece> pieces= new PiecesListBuilder(4, 4)
                 .addPieces(Knight.class, 4)
                 .addPieces(Rook.class, 2)
@@ -77,6 +79,7 @@ public class Main {
     }
 
     private static void taskCase() {
+        System.out.println("Start Task Case");
         long start = System.currentTimeMillis();
         List<IPiece> pieces = new PiecesListBuilder(7, 7)
                 .addPieces(King.class, 2)
@@ -94,6 +97,7 @@ public class Main {
     }
 
     private static List<Board> perfTestCase() {
+        System.out.println("Start Perf Test");
         List<IPiece> pieces = new PiecesListBuilder(6, 6)
                 .addPieces(King.class, 2)
                 .addPieces(Queen.class, 4)
@@ -108,6 +112,7 @@ public class Main {
     }
 
     private static void testCase3() {
+        System.out.println("Start Test #3");
         List<IPiece> pieces = new PiecesListBuilder(4, 4)
                 .addPieces(Queen.class, 2)
                 .addPieces(Knight.class, 1)
@@ -126,6 +131,7 @@ public class Main {
     }
 
     private static void testCase4() {
+        System.out.println("Start Test #4");
         List<IPiece> pieces = new PiecesListBuilder(8, 8)
                 .addPieces(Queen.class, 8)
                 .build();

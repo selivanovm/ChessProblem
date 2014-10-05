@@ -1,18 +1,18 @@
 package chessproblem.model.pieces;
 
 import chessproblem.model.Board;
-import chessproblem.model.SquareCoordinates;
+import chessproblem.model.CoordinatesBuffer;
 import chessproblem.model.SquareStateEnum;
 
 public class Knight extends AbstractPiece {
 
-    public Knight(byte boardWidth, byte boardHeight) {
-        super(false, false, SquareStateEnum.Knight, boardWidth, boardHeight);
+    public Knight(CoordinatesBuffer coordinatesBuffer) {
+        super(false, false, SquareStateEnum.Knight, coordinatesBuffer);
     }
 
     @Override
     public short[] getAttackedSquares(int x, int y, Board board) {
-        resetCoordinatesBuffer();
+        coordinatesBuffer.resetCoordinatesBuffer();
         addSquare(x + 2, y + 1, board.width, board.height);
         addSquare(x - 2, y + 1, board.width, board.height);
 
@@ -24,8 +24,8 @@ public class Knight extends AbstractPiece {
 
         addSquare(x - 1, y + 2, board.width, board.height);
         addSquare(x - 1, y - 2, board.width, board.height);
-        sealCoordinatesBuffer();
-        return coordinatesBuffer.get();
+        coordinatesBuffer.sealCoordinatesBuffer();
+        return coordinatesBuffer.getCoordinatesBuffer();
     }
 
     @Override
