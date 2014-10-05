@@ -2,6 +2,7 @@ package chessproblem.model.pieces;
 
 import chessproblem.model.Board;
 import chessproblem.model.SquareCoordinates;
+import chessproblem.model.SquareStateEnum;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.List;
 public class King extends AbstractPiece {
 
     public King() {
-        super(false, false);
+        super(false, false, SquareStateEnum.King);
     }
 
     @Override

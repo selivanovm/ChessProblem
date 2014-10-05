@@ -2,13 +2,14 @@ package chessproblem.model;
 
 import chessproblem.util.BitUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class Board {
     public final int width;
     public final int height;
 
-    private final ISquareState[][] squareStates;
+    private final ISquareState[] squareStates;
 
     private final int verticalGuardedLines;
     private final int horizontalGuardedLines;
@@ -20,14 +21,14 @@ public class Board {
     public Board(int width, int height) {
         this.width = width;
         this.height = height;
-        this.squareStates = new ISquareState[this.width][this.height];
+        this.squareStates = new ISquareState[this.width * this.height];
         this.verticalGuardedLines = 0;
         this.horizontalGuardedLines = 0;
         this.guardedDiagonals = 0;
         this.guardedBackDiagonals = 0;
     }
 
-    private Board(Board oldBoard, ISquareState[][] squareStates, int newHGLines, int newVGLines,
+    private Board(Board oldBoard, ISquareState[] squareStates, int newHGLines, int newVGLines,
                   int newGDiagonals, int newGBDiagonals) {
         this.width = oldBoard.width;
         this.height = oldBoard.height;
@@ -48,7 +49,7 @@ public class Board {
      * @return new board's state, or nothing
      */
     public Board putPiece(IPiece piece, int x, int y) {
-        ISquareState squareState = squareStates[x][y];
+        ISquareState squareState = squareStates[getBoardPosition(x, y)];
         if (squareState != null) {
             return null;
         } else {
@@ -57,23 +58,21 @@ public class Board {
                 int attackedSquareX = v.x;
                 int attackedSquareY = v.y;
 
-                squareState = squareStates[attackedSquareX][attackedSquareY];
+                squareState = squareStates[getBoardPosition(attackedSquareX, attackedSquareY)];
                 boolean squareIsSquatted = squareState != null && squareState != AttackedSquare.INSTANCE;
                 if (squareIsSquatted) {
                     return null;
                 }
             }
 
-            ISquareState[][] newBoardArray = new ISquareState[this.width][this.height];
-            for (int i = 0; i < this.width; i++) {
-                System.arraycopy(squareStates[i], 0, newBoardArray[i], 0, this.height);
-            }
+            ISquareState[] newBoardArray = new ISquareState[this.width * this.height];
+            System.arraycopy(squareStates, 0, newBoardArray, 0, this.width * this.height);
 
             for (SquareCoordinates v : attackVectors) {
-                newBoardArray[v.x][v.y] = AttackedSquare.INSTANCE;
+                newBoardArray[getBoardPosition(v.x, v.y)] = AttackedSquare.INSTANCE;
             }
 
-            newBoardArray[x][y] = piece;
+            newBoardArray[getBoardPosition(x, y)] = piece;
 
             int newHGLines = this.horizontalGuardedLines;
             int newVGLines = this.verticalGuardedLines;
@@ -97,7 +96,7 @@ public class Board {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < width; i++) {
                 for (int j = 0; j < height; j++) {
-                    ISquareState iSquareState = squareStates[i][j];
+                    ISquareState iSquareState = squareStates[getBoardPosition(i, j)];
                     sb.append(iSquareState == null ? ". " : iSquareState.toString() + " ");
                 }
                 sb.append("\n");
@@ -107,6 +106,7 @@ public class Board {
         return representation;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -114,12 +114,14 @@ public class Board {
 
         Board board = (Board) o;
 
-        return width == board.width && getStringRepresentation().equals(board.getStringRepresentation());
+        if (!Arrays.equals(squareStates, board.squareStates)) return false;
+
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return getStringRepresentation().hashCode();
+        return Arrays.hashCode(squareStates);
     }
 
     @Override
@@ -165,5 +167,9 @@ public class Board {
 
     private int getBackDiagonalNumber(int x, int y) {
         return x + y;
+    }
+
+    private int getBoardPosition(int x, int y) {
+        return x * height + y;
     }
 }

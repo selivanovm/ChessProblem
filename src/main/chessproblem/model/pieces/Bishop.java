@@ -2,6 +2,7 @@ package chessproblem.model.pieces;
 
 import chessproblem.model.Board;
 import chessproblem.model.SquareCoordinates;
+import chessproblem.model.SquareStateEnum;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.List;
 public class Bishop extends AbstractPiece {
 
     public Bishop() {
-        super(false, true);
+        super(false, true, SquareStateEnum.Bishop);
     }
 
     @Override
@@ -23,4 +24,5 @@ public class Bishop extends AbstractPiece {
     public String toString() {
         return "B";
     }
+
 }

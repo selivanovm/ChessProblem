@@ -2,6 +2,7 @@ package chessproblem.model.pieces;
 
 import chessproblem.model.IPiece;
 import chessproblem.model.SquareCoordinates;
+import chessproblem.model.SquareStateEnum;
 
 import java.util.List;
 
@@ -10,10 +11,12 @@ abstract class AbstractPiece implements IPiece {
     final int checkPriority;
     final boolean guardsLines;
     final boolean guardsDiagonals;
+    final SquareStateEnum squareState;
 
-    AbstractPiece(boolean guardsLines, boolean guardsDiagonals) {
+    AbstractPiece(boolean guardsLines, boolean guardsDiagonals, SquareStateEnum squareState) {
         this.guardsLines = guardsLines;
         this.guardsDiagonals = guardsDiagonals;
+        this.squareState = squareState;
 
         // We want to start bruteforce from pieces that maximize guarded squares generation.
         // Pieces with a higher priority are checked in the first place.
@@ -71,5 +74,22 @@ abstract class AbstractPiece implements IPiece {
     @Override
     public int getCheckPriority() {
         return checkPriority;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AbstractPiece that = (AbstractPiece) o;
+
+        if (squareState != that.squareState) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return squareState.hashCode();
     }
 }
