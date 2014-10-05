@@ -1,5 +1,6 @@
 package chessproblem.model.pieces;
 
+import chessproblem.model.Board;
 import chessproblem.model.SquareCoordinates;
 
 import java.util.LinkedList;
@@ -7,10 +8,14 @@ import java.util.List;
 
 public class Bishop extends AbstractPiece {
 
+    public Bishop() {
+        super(false, true);
+    }
+
     @Override
-    public List<SquareCoordinates> getAttackedSquares(int x, int y, int width, int height) {
+    public List<SquareCoordinates> getAttackedSquares(int x, int y, Board board) {
         List<SquareCoordinates> result = new LinkedList<>();
-        addFullDiagonalCross(result, x, y, width, height);
+        addFullDiagonalCross(result, x, y, board.width, board.height);
         return result;
     }
 

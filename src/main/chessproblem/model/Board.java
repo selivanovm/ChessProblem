@@ -1,5 +1,7 @@
 package chessproblem.model;
 
+import chessproblem.util.BitUtil;
+
 import java.util.List;
 
 public class Board {
@@ -7,20 +9,34 @@ public class Board {
     public final int height;
 
     private final ISquareState[][] squareStates;
-    private final String stringRepresentation;
+
+    private final int verticalGuardedLines;
+    private final int horizontalGuardedLines;
+    private final int guardedDiagonals;
+    private final int guardedBackDiagonals;
+
+    private String representation;
 
     public Board(int width, int height) {
         this.width = width;
         this.height = height;
         this.squareStates = new ISquareState[this.width][this.height];
-        this.stringRepresentation = getStringRepresentation();
+        this.verticalGuardedLines = 0;
+        this.horizontalGuardedLines = 0;
+        this.guardedDiagonals = 0;
+        this.guardedBackDiagonals = 0;
     }
 
-    private Board(ISquareState[][] squareStates, int width, int height) {
-        this.width = width;
-        this.height = height;
+    private Board(Board oldBoard, ISquareState[][] squareStates, int newHGLines, int newVGLines,
+                  int newGDiagonals, int newGBDiagonals) {
+        this.width = oldBoard.width;
+        this.height = oldBoard.height;
         this.squareStates = squareStates;
-        this.stringRepresentation = getStringRepresentation();
+
+        this.horizontalGuardedLines = newHGLines;
+        this.verticalGuardedLines = newVGLines;
+        this.guardedDiagonals = newGDiagonals;
+        this.guardedBackDiagonals = newGBDiagonals;
     }
 
     /**
@@ -36,7 +52,7 @@ public class Board {
         if (squareState != null) {
             return null;
         } else {
-            List<SquareCoordinates> attackVectors = piece.getAttackedSquares(x, y, width, height);
+            List<SquareCoordinates> attackVectors = piece.getAttackedSquares(x, y, this);
             for (SquareCoordinates v : attackVectors) {
                 int attackedSquareX = v.x;
                 int attackedSquareY = v.y;
@@ -52,36 +68,43 @@ public class Board {
             for (int i = 0; i < this.width; i++) {
                 System.arraycopy(squareStates[i], 0, newBoardArray[i], 0, this.height);
             }
+
             for (SquareCoordinates v : attackVectors) {
                 newBoardArray[v.x][v.y] = AttackedSquare.INSTANCE;
             }
 
             newBoardArray[x][y] = piece;
-            return new Board(newBoardArray, width, height);
+
+            int newHGLines = this.horizontalGuardedLines;
+            int newVGLines = this.verticalGuardedLines;
+            int newGDiagonals = this.guardedDiagonals;
+            int newGBDiagonals = this.guardedBackDiagonals;
+            if (piece.isGuardsLines()) {
+                newHGLines = setHorizontalLineGuarded(y);
+                newVGLines = setVerticalGuardedLine(x);
+            }
+            if (piece.isGuardsDiagonals()) {
+                newGDiagonals = setDiagonalGuarded(x, y);
+                newGBDiagonals = setBackDiagonalGuarded(x, y);
+            }
+
+            return new Board(this, newBoardArray, newHGLines, newVGLines, newGDiagonals, newGBDiagonals);
         }
     }
 
-    public String getBoardHashString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                ISquareState iSquareState = squareStates[i][j];
-                sb.append(iSquareState == null ? "." : iSquareState.toString());
+    public String getStringRepresentation() {
+        if (representation == null) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    ISquareState iSquareState = squareStates[i][j];
+                    sb.append(iSquareState == null ? ". " : iSquareState.toString() + " ");
+                }
+                sb.append("\n");
             }
+            representation = sb.toString();
         }
-        return sb.toString();
-    }
-
-    private String getStringRepresentation() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                ISquareState iSquareState = squareStates[i][j];
-                sb.append(iSquareState == null ? ". " : iSquareState.toString() + " ");
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
+        return representation;
     }
 
     @Override
@@ -91,17 +114,56 @@ public class Board {
 
         Board board = (Board) o;
 
-        return width == board.width && stringRepresentation.equals(board.stringRepresentation);
+        return width == board.width && getStringRepresentation().equals(board.getStringRepresentation());
     }
 
     @Override
     public int hashCode() {
-        return stringRepresentation.hashCode();
+        return getStringRepresentation().hashCode();
     }
 
     @Override
     public String toString() {
-        return stringRepresentation;
+        return getStringRepresentation();
     }
 
+    public boolean isVerticalLineGuarded(int x) {
+        return BitUtil.isBitSet(verticalGuardedLines, x);
+    }
+
+    public int setVerticalGuardedLine(int x) {
+        return BitUtil.setBit(verticalGuardedLines, x);
+    }
+
+    public boolean isHorizontalLineGuarded(int y) {
+        return BitUtil.isBitSet(horizontalGuardedLines, y);
+    }
+
+    public int setHorizontalLineGuarded(int y) {
+        return BitUtil.setBit(horizontalGuardedLines, y);
+    }
+
+    public boolean isDiagonalGuarded(int x, int y) {
+        return BitUtil.isBitSet(guardedDiagonals, getDiagonalNumber(x, y));
+    }
+
+    public int setDiagonalGuarded(int x, int y) {
+        return BitUtil.setBit(guardedDiagonals, getDiagonalNumber(x, y));
+    }
+
+    public boolean isBackDiagonalGuarded(int x, int y) {
+        return BitUtil.isBitSet(guardedBackDiagonals, getBackDiagonalNumber(x, y));
+    }
+
+    public int setBackDiagonalGuarded(int x, int y) {
+        return BitUtil.setBit(guardedBackDiagonals, getBackDiagonalNumber(x, y));
+    }
+
+    private int getDiagonalNumber(int x, int y) {
+        return x - y + this.height;
+    }
+
+    private int getBackDiagonalNumber(int x, int y) {
+        return x + y;
+    }
 }

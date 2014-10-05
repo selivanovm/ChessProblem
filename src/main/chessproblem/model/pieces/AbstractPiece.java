@@ -7,6 +7,22 @@ import java.util.List;
 
 abstract class AbstractPiece implements IPiece {
 
+    final int checkPriority;
+    final boolean guardsLines;
+    final boolean guardsDiagonals;
+
+    AbstractPiece(boolean guardsLines, boolean guardsDiagonals) {
+        this.guardsLines = guardsLines;
+        this.guardsDiagonals = guardsDiagonals;
+
+        // We want to start bruteforce from pieces that maximize guarded squares generation.
+        // Pieces with a higher priority are checked in the first place.
+        int pieceCheckPriority = 0;
+        if (guardsLines) pieceCheckPriority += 2;
+        if (guardsDiagonals) pieceCheckPriority += 1;
+        this.checkPriority = pieceCheckPriority;
+    }
+
     void addSquare(List<SquareCoordinates> squareCoordinates, int x, int y, int boardWidth, int boardHeight) {
         if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight) {
             squareCoordinates.add(new SquareCoordinates(x, y));
@@ -42,4 +58,18 @@ abstract class AbstractPiece implements IPiece {
         }
     }
 
+    @Override
+    public boolean isGuardsLines() {
+        return guardsLines;
+    }
+
+    @Override
+    public boolean isGuardsDiagonals() {
+        return guardsDiagonals;
+    }
+
+    @Override
+    public int getCheckPriority() {
+        return checkPriority;
+    }
 }

@@ -10,13 +10,33 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
+        runTests();
+        runPerfTest();
+        taskCase();
+    }
+
+    private static void runPerfTest() {
+        long start = System.currentTimeMillis();
+        List<Board> solutions = null;
+        for (int i = 0; i < 100; i++) {
+            List<Board> newSolutions = perfTestCase();
+
+            if (solutions != null) {
+                checkSolution2(solutions, newSolutions);
+            }
+            solutions = newSolutions;
+        }
+        int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
+        System.out.printf("Performance test time: %d sec.\n", durationSec);
+    }
+
+    private static void runTests() {
         testCase1();
         testCase2();
-        //testCase3();
+        testCase3();
         //testCase4();
-        testCase5();
-        //testCase6();
     }
+
 
     private static void testCase1() {
         List<IPiece> pieces = new PiecesListBuilder()
@@ -51,31 +71,38 @@ public class Main {
         checkSolutions(new Solver().solve(pieces, 4, 4), expectedResult);
     }
 
+    private static void taskCase() {
+        long start = System.currentTimeMillis();
+        List<IPiece> pieces = new PiecesListBuilder()
+                .addPieces(King.class, 2)
+                .addPieces(Queen.class, 2)
+                .addPieces(Bishop.class, 2)
+                .addPieces(Knight.class, 1)
+                .build();
+
+        Solver solver = new Solver();
+        List<Board> solve = solver.solve(pieces, 7, 7);
+        int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
+        System.out.printf("Task time: %d sec. Result: %d\n", durationSec, solve.size());
+
+        assert solve.size() == 3063828;
+    }
+
+    private static List<Board> perfTestCase() {
+        List<IPiece> pieces = new PiecesListBuilder()
+                .addPieces(King.class, 2)
+                .addPieces(Queen.class, 4)
+                .addPieces(Bishop.class, 2)
+                .addPieces(Knight.class, 1)
+                .build();
+
+        //System.out.println(pieces);
+
+        Solver solver = new Solver();
+        return solver.solve(pieces, 6, 6);
+    }
+
     private static void testCase3() {
-        List<IPiece> pieces = new PiecesListBuilder()
-                .addPieces(King.class, 2)
-                .addPieces(Queen.class, 2)
-                .addPieces(Bishop.class, 2)
-                .addPieces(Knight.class, 1)
-                .build();
-
-        Solver solver = new Solver();
-        solver.solve(pieces, 7, 7);
-    }
-
-    private static void testCase4() {
-        List<IPiece> pieces = new PiecesListBuilder()
-                .addPieces(King.class, 2)
-                .addPieces(Queen.class, 2)
-                .addPieces(Bishop.class, 2)
-                .addPieces(Knight.class, 1)
-                .build();
-
-        Solver solver = new Solver();
-        solver.solve(pieces, 5, 5);
-    }
-
-    private static void testCase5() {
         List<IPiece> pieces = new PiecesListBuilder()
                 .addPieces(Queen.class, 2)
                 .addPieces(Knight.class, 1)
@@ -93,7 +120,7 @@ public class Main {
         checkSolutions(new Solver().solve(pieces, 4, 4), expectedResult);
     }
 
-    private static void testCase6() {
+    private static void testCase4() {
         List<IPiece> pieces = new PiecesListBuilder()
                 .addPieces(Queen.class, 8)
                 .build();
@@ -104,6 +131,11 @@ public class Main {
     private static void checkSolutions(List<Board> solutions, List<String> expectedResults) {
         assert solutions.stream().map(Board::toString).sorted().reduce((acc, s) -> acc + s)
                 .equals(expectedResults.stream().sorted().reduce((acc, s) -> acc + s));
+    }
+
+    private static void checkSolution2(List<Board> solutions1, List<Board> solutions2) {
+        assert solutions1.stream().map(Board::toString).sorted().reduce((acc, s) -> acc + s)
+                .equals(solutions2.stream().map(Board::toString).sorted().reduce((acc, s) -> acc + s));
     }
 
 }
