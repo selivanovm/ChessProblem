@@ -1,28 +1,24 @@
 package chessproblem.model.pieces;
 
 import chessproblem.model.Board;
-import chessproblem.model.SquareCoordinates;
 import chessproblem.model.SquareStateEnum;
-
-import java.util.LinkedList;
-import java.util.List;
 
 public class Bishop extends AbstractPiece {
 
-    public Bishop() {
-        super(false, true, SquareStateEnum.Bishop);
+    public Bishop(byte boardWidth, byte boardHeight) {
+        super(false, true, SquareStateEnum.Bishop, boardWidth, boardHeight);
     }
 
     @Override
-    public List<SquareCoordinates> getAttackedSquares(int x, int y, Board board) {
-        List<SquareCoordinates> result = new LinkedList<>();
-        addFullDiagonalCross(result, x, y, board.width, board.height);
-        return result;
+    public short[] getAttackedSquares(int x, int y, Board board) {
+        resetCoordinatesBuffer();
+        addFullDiagonalCross(x, y, board.width, board.height);
+        sealCoordinatesBuffer();
+        return coordinatesBuffer.get();
     }
 
     @Override
     public String toString() {
         return "B";
     }
-
 }

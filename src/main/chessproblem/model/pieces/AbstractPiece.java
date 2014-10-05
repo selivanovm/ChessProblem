@@ -3,17 +3,22 @@ package chessproblem.model.pieces;
 import chessproblem.model.IPiece;
 import chessproblem.model.SquareCoordinates;
 import chessproblem.model.SquareStateEnum;
+import chessproblem.util.BitUtil;
 
 import java.util.List;
 
-abstract class AbstractPiece implements IPiece {
+public abstract class AbstractPiece implements IPiece {
+    public static final short COORDINATES_BUFFER_TERMINAL_NUMBER = BitUtil.packBytesToShort((byte) -1, (byte) -1);
+
+    final ThreadLocal<short[]> coordinatesBuffer = new ThreadLocal<>();
+    final ThreadLocal<Integer> coordinatesBufferPosition = new ThreadLocal<>();
 
     final int checkPriority;
     final boolean guardsLines;
     final boolean guardsDiagonals;
     final SquareStateEnum squareState;
 
-    AbstractPiece(boolean guardsLines, boolean guardsDiagonals, SquareStateEnum squareState) {
+    AbstractPiece(boolean guardsLines, boolean guardsDiagonals, SquareStateEnum squareState, byte boardWidth, byte boardHeight) {
         this.guardsLines = guardsLines;
         this.guardsDiagonals = guardsDiagonals;
         this.squareState = squareState;
@@ -24,28 +29,59 @@ abstract class AbstractPiece implements IPiece {
         if (guardsLines) pieceCheckPriority += 2;
         if (guardsDiagonals) pieceCheckPriority += 1;
         this.checkPriority = pieceCheckPriority;
+
+        this.coordinatesBuffer.set(new short[2 * (boardWidth + boardHeight)]);
+        this.coordinatesBufferPosition.set(0);
     }
 
-    void addSquare(List<SquareCoordinates> squareCoordinates, int x, int y, int boardWidth, int boardHeight) {
-        if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight) {
-            squareCoordinates.add(new SquareCoordinates(x, y));
+    void resetCoordinatesBuffer() {
+        this.coordinatesBufferPosition.set(0);
+    }
+
+    void sealCoordinatesBuffer() {
+        int pos = this.coordinatesBufferPosition.get();
+        short[] buffer = this.coordinatesBuffer.get();
+        if (pos < buffer.length) {
+            writeToCoordinatesBuffer(pos, COORDINATES_BUFFER_TERMINAL_NUMBER);
         }
     }
 
-    void addFullCross(List<SquareCoordinates> coordinatesList, int x, int y, int width, int height) {
+    void addSquare(int x, int y, byte boardWidth, byte boardHeight) {
+        int pos = coordinatesBufferPosition.get();
+        if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight) {
+            writeToCoordinatesBuffer(pos, BitUtil.packBytesToShort((byte) x, (byte) y));
+        }
+    }
+
+    void addSquareNoChecks(byte x, byte y) {
+        writeToCoordinatesBuffer(BitUtil.packBytesToShort(x, y));
+    }
+
+    private void writeToCoordinatesBuffer(int position, short value) {
+        coordinatesBuffer.get()[position] = value;
+        coordinatesBufferPosition.set(position + 1);
+    }
+
+    private void writeToCoordinatesBuffer(short value) {
+        int pos = coordinatesBufferPosition.get();
+        coordinatesBuffer.get()[pos] = value;
+        coordinatesBufferPosition.set(pos + 1);
+    }
+
+    void addFullCross(int x, int y, int width, int height) {
         for (int i = 0; i < width; i++) {
             if (i != x) {
-                coordinatesList.add(new SquareCoordinates(i, y));
+                addSquareNoChecks((byte) i, (byte) y);
             }
         }
         for (int j = 0; j < height; j++) {
             if (j != y) {
-                coordinatesList.add(new SquareCoordinates(x, j));
+                addSquareNoChecks((byte) x, (byte) j);
             }
         }
     }
 
-    void addFullDiagonalCross(List<SquareCoordinates> result, int x, int y, int width, int height) {
+    void addFullDiagonalCross(int x, int y, byte width, byte height) {
         int diagonalX = Math.max(0, x - y);
         int diagonalY = Math.max(0, y - x);
 
@@ -53,11 +89,11 @@ abstract class AbstractPiece implements IPiece {
         int backDiagonalY = Math.min(height - 1, y + x);
 
         while (diagonalX < width && diagonalY < height) {
-            result.add(new SquareCoordinates(diagonalX++, diagonalY++));
+            addSquareNoChecks((byte) (diagonalX++), (byte) (diagonalY++));
         }
 
         while (backDiagonalX < width && backDiagonalY >= 0) {
-            result.add(new SquareCoordinates(backDiagonalX++, backDiagonalY--));
+            addSquareNoChecks((byte) (backDiagonalX++), (byte) (backDiagonalY--));
         }
     }
 

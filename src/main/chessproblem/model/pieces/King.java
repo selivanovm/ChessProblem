@@ -4,25 +4,23 @@ import chessproblem.model.Board;
 import chessproblem.model.SquareCoordinates;
 import chessproblem.model.SquareStateEnum;
 
-import java.util.LinkedList;
-import java.util.List;
-
 public class King extends AbstractPiece {
 
-    public King() {
-        super(false, false, SquareStateEnum.King);
+    public King(byte boardWidth, byte boardHeight) {
+        super(false, false, SquareStateEnum.King, boardWidth, boardHeight);
     }
 
     @Override
-    public List<SquareCoordinates> getAttackedSquares(int x, int y, Board board) {
-        List<SquareCoordinates> result = new LinkedList<>();
-        for (int i = -1; i < 2; i++) {
-            addSquare(result, x + 1, y + i, board.width, board.height);
-            addSquare(result, x - 1, y + i, board.width, board.height);
+    public short[] getAttackedSquares(int x, int y, Board board) {
+        resetCoordinatesBuffer();
+        for (byte i = -1; i < 2; i++) {
+            addSquare(x + 1, y + i, board.width, board.height);
+            addSquare(x - 1, y + i, board.width, board.height);
         }
-        addSquare(result, x, y - 1, board.width, board.height);
-        addSquare(result, x, y + 1, board.width, board.height);
-        return result;
+        addSquare(x, y - 1, board.width, board.height);
+        addSquare(x, y + 1, board.width, board.height);
+        sealCoordinatesBuffer();
+        return coordinatesBuffer.get();
     }
 
     @Override

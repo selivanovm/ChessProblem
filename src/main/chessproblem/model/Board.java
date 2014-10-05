@@ -1,13 +1,14 @@
 package chessproblem.model;
 
+import chessproblem.model.pieces.AbstractPiece;
 import chessproblem.util.BitUtil;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class Board {
-    public final int width;
-    public final int height;
+    public final byte width;
+    public final byte height;
 
     private final ISquareState[] squareStates;
 
@@ -18,7 +19,7 @@ public class Board {
 
     private String representation;
 
-    public Board(int width, int height) {
+    public Board(byte width, byte height) {
         this.width = width;
         this.height = height;
         this.squareStates = new ISquareState[this.width * this.height];
@@ -53,10 +54,14 @@ public class Board {
         if (squareState != null) {
             return null;
         } else {
-            List<SquareCoordinates> attackVectors = piece.getAttackedSquares(x, y, this);
-            for (SquareCoordinates v : attackVectors) {
-                int attackedSquareX = v.x;
-                int attackedSquareY = v.y;
+            short[] attackVectors = piece.getAttackedSquares(x, y, this);
+            for (int i = 0; i < attackVectors.length; i++) {
+                short v = attackVectors[i];
+                if (v == AbstractPiece.COORDINATES_BUFFER_TERMINAL_NUMBER) {
+                    break;
+                }
+                byte attackedSquareX = BitUtil.getFirstByteFromShort(v);
+                byte attackedSquareY = BitUtil.getSecondByteFromShort(v);
 
                 squareState = squareStates[getBoardPosition(attackedSquareX, attackedSquareY)];
                 boolean squareIsSquatted = squareState != null && squareState != AttackedSquare.INSTANCE;
@@ -68,8 +73,16 @@ public class Board {
             ISquareState[] newBoardArray = new ISquareState[this.width * this.height];
             System.arraycopy(squareStates, 0, newBoardArray, 0, this.width * this.height);
 
-            for (SquareCoordinates v : attackVectors) {
-                newBoardArray[getBoardPosition(v.x, v.y)] = AttackedSquare.INSTANCE;
+            for (int i = 0; i < attackVectors.length; i++) {
+                short v = attackVectors[i];
+                if (v == AbstractPiece.COORDINATES_BUFFER_TERMINAL_NUMBER) {
+                    break;
+                }
+                newBoardArray[
+                        getBoardPosition(
+                                BitUtil.getFirstByteFromShort(v),
+                                BitUtil.getSecondByteFromShort(v))
+                        ] = AttackedSquare.INSTANCE;
             }
 
             newBoardArray[getBoardPosition(x, y)] = piece;
@@ -105,7 +118,6 @@ public class Board {
         }
         return representation;
     }
-
 
     @Override
     public boolean equals(Object o) {

@@ -13,7 +13,7 @@ class Solver {
 
     public List<Board> solve(List<IPiece> pieces, int width, int height) {
         AtomicInteger counter = new AtomicInteger(0);
-        loop(new Board(width, height), pieces, counter);
+        loop(new Board((byte) width, (byte) height), pieces, counter);
         return new LinkedList<>(boardPrefixCache);
     }
 

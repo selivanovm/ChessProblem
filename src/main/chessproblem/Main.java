@@ -39,7 +39,7 @@ public class Main {
 
 
     private static void testCase1() {
-        List<IPiece> pieces = new PiecesListBuilder()
+        List<IPiece> pieces = new PiecesListBuilder(3, 3)
                 .addPieces(King.class, 2)
                 .addPieces(Rook.class, 1)
                 .build();
@@ -50,11 +50,16 @@ public class Main {
         expectedResults.add("x R x \nx x x \nK x K \n");
         expectedResults.add("x x K \nR x x \nx x K \n");
 
-        checkSolutions(new Solver().solve(pieces, 3, 3), expectedResults);
+        List<Board> results = new Solver().solve(pieces, 3, 3);
+        for (Board b : results) {
+            System.out.print(b);
+            System.out.println("===");
+        }
+        checkSolutions(results, expectedResults);
     }
 
     private static void testCase2() {
-        List<IPiece> pieces= new PiecesListBuilder()
+        List<IPiece> pieces= new PiecesListBuilder(4, 4)
                 .addPieces(Knight.class, 4)
                 .addPieces(Rook.class, 2)
                 .build();
@@ -73,7 +78,7 @@ public class Main {
 
     private static void taskCase() {
         long start = System.currentTimeMillis();
-        List<IPiece> pieces = new PiecesListBuilder()
+        List<IPiece> pieces = new PiecesListBuilder(7, 7)
                 .addPieces(King.class, 2)
                 .addPieces(Queen.class, 2)
                 .addPieces(Bishop.class, 2)
@@ -89,7 +94,7 @@ public class Main {
     }
 
     private static List<Board> perfTestCase() {
-        List<IPiece> pieces = new PiecesListBuilder()
+        List<IPiece> pieces = new PiecesListBuilder(6, 6)
                 .addPieces(King.class, 2)
                 .addPieces(Queen.class, 4)
                 .addPieces(Bishop.class, 2)
@@ -103,7 +108,7 @@ public class Main {
     }
 
     private static void testCase3() {
-        List<IPiece> pieces = new PiecesListBuilder()
+        List<IPiece> pieces = new PiecesListBuilder(4, 4)
                 .addPieces(Queen.class, 2)
                 .addPieces(Knight.class, 1)
                 .build();
@@ -121,7 +126,7 @@ public class Main {
     }
 
     private static void testCase4() {
-        List<IPiece> pieces = new PiecesListBuilder()
+        List<IPiece> pieces = new PiecesListBuilder(8, 8)
                 .addPieces(Queen.class, 8)
                 .build();
 

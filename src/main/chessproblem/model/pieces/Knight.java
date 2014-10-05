@@ -4,31 +4,28 @@ import chessproblem.model.Board;
 import chessproblem.model.SquareCoordinates;
 import chessproblem.model.SquareStateEnum;
 
-import java.util.LinkedList;
-import java.util.List;
-
 public class Knight extends AbstractPiece {
 
-    public Knight() {
-        super(false, false, SquareStateEnum.Knight);
+    public Knight(byte boardWidth, byte boardHeight) {
+        super(false, false, SquareStateEnum.Knight, boardWidth, boardHeight);
     }
 
     @Override
-    public List<SquareCoordinates> getAttackedSquares(int x, int y, Board board) {
-        List<SquareCoordinates> result = new LinkedList<>();
-        addSquare(result, x + 2, y + 1, board.width, board.height);
-        addSquare(result, x - 2, y + 1, board.width, board.height);
+    public short[] getAttackedSquares(int x, int y, Board board) {
+        resetCoordinatesBuffer();
+        addSquare(x + 2, y + 1, board.width, board.height);
+        addSquare(x - 2, y + 1, board.width, board.height);
 
-        addSquare(result, x + 2, y - 1, board.width, board.height);
-        addSquare(result, x - 2, y - 1, board.width, board.height);
+        addSquare(x + 2, y - 1, board.width, board.height);
+        addSquare(x - 2, y - 1, board.width, board.height);
 
-        addSquare(result, x + 1, y + 2, board.width, board.height);
-        addSquare(result, x + 1, y - 2, board.width, board.height);
+        addSquare(x + 1, y + 2, board.width, board.height);
+        addSquare(x + 1, y - 2, board.width, board.height);
 
-        addSquare(result, x - 1, y + 2, board.width, board.height);
-        addSquare(result, x - 1, y - 2, board.width, board.height);
-
-        return result;
+        addSquare(x - 1, y + 2, board.width, board.height);
+        addSquare(x - 1, y - 2, board.width, board.height);
+        sealCoordinatesBuffer();
+        return coordinatesBuffer.get();
     }
 
     @Override

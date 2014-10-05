@@ -9,12 +9,19 @@ import java.util.stream.Stream;
 
 class PiecesListBuilder {
     private final List<IPiece> pieces = new LinkedList<>();
+    private final int boardWidth;
+    private final int boardHeight;
+
+    public PiecesListBuilder(int boardWidth, int boardHeight) {
+        this.boardWidth = boardWidth;
+        this.boardHeight = boardHeight;
+    }
 
     PiecesListBuilder addPieces(Class pieceType, int amount) {
         checkForRepeatedPieces(pieceType);
         try {
             for (int i = 0; i < amount; i++) {
-                pieces.add((IPiece) (pieceType.getDeclaredConstructor().newInstance()));
+                pieces.add((IPiece) (pieceType.getConstructor(byte.class, byte.class).newInstance((byte) boardWidth, (byte) boardHeight)));
             }
         } catch (Exception e) {
             throw new RuntimeException("Can't create piece of type " + pieceType.getName(), e);
