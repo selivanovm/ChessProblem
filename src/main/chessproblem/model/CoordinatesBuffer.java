@@ -27,7 +27,7 @@ public class CoordinatesBuffer {
         };
     }
 
-    public short[] getCoordinatesBuffer() {
+    public short[] getCoordinates() {
         return coordinatesBuffer.get();
     }
 
@@ -36,7 +36,7 @@ public class CoordinatesBuffer {
     }
 
     public void writeToCoordinatesBuffer(int position, short value) {
-        getCoordinatesBuffer()[position] = value;
+        getCoordinates()[position] = value;
         coordinatesBufferPosition.set(position + 1);
     }
 
@@ -46,7 +46,7 @@ public class CoordinatesBuffer {
     }
 
     public void sealCoordinatesBuffer() {
-        short[] buffer = getCoordinatesBuffer();
+        short[] buffer = getCoordinates();
         if (coordinatesBufferPosition.get() < buffer.length) {
             writeToCoordinatesBuffer(COORDINATES_BUFFER_TERMINAL_NUMBER);
         }

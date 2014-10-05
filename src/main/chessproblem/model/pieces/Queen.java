@@ -12,11 +12,11 @@ public class Queen extends AbstractPiece {
 
     @Override
     public short[] getAttackedSquares(int x, int y, Board board) {
-        coordinatesBuffer.resetCoordinatesBuffer();
+        guardedCoordinatesBuffer.resetCoordinatesBuffer();
         addFullCross(x, y, board.width, board.height);
         addFullDiagonalCross(x, y, board.width, board.height);
-        coordinatesBuffer.sealCoordinatesBuffer();
-        return coordinatesBuffer.getCoordinatesBuffer();
+        guardedCoordinatesBuffer.sealCoordinatesBuffer();
+        return guardedCoordinatesBuffer.getCoordinates();
     }
 
     @Override

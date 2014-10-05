@@ -12,7 +12,7 @@ public class Knight extends AbstractPiece {
 
     @Override
     public short[] getAttackedSquares(int x, int y, Board board) {
-        coordinatesBuffer.resetCoordinatesBuffer();
+        guardedCoordinatesBuffer.resetCoordinatesBuffer();
         addSquare(x + 2, y + 1, board.width, board.height);
         addSquare(x - 2, y + 1, board.width, board.height);
 
@@ -24,8 +24,8 @@ public class Knight extends AbstractPiece {
 
         addSquare(x - 1, y + 2, board.width, board.height);
         addSquare(x - 1, y - 2, board.width, board.height);
-        coordinatesBuffer.sealCoordinatesBuffer();
-        return coordinatesBuffer.getCoordinatesBuffer();
+        guardedCoordinatesBuffer.sealCoordinatesBuffer();
+        return guardedCoordinatesBuffer.getCoordinates();
     }
 
     @Override

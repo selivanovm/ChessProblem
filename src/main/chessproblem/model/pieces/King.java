@@ -12,15 +12,15 @@ public class King extends AbstractPiece {
 
     @Override
     public short[] getAttackedSquares(int x, int y, Board board) {
-        coordinatesBuffer.resetCoordinatesBuffer();
+        guardedCoordinatesBuffer.resetCoordinatesBuffer();
         for (byte i = -1; i < 2; i++) {
             addSquare(x + 1, y + i, board.width, board.height);
             addSquare(x - 1, y + i, board.width, board.height);
         }
         addSquare(x, y - 1, board.width, board.height);
         addSquare(x, y + 1, board.width, board.height);
-        coordinatesBuffer.sealCoordinatesBuffer();
-        return coordinatesBuffer.getCoordinatesBuffer();
+        guardedCoordinatesBuffer.sealCoordinatesBuffer();
+        return guardedCoordinatesBuffer.getCoordinates();
     }
 
     @Override

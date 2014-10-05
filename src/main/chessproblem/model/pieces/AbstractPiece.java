@@ -10,7 +10,7 @@ public abstract class AbstractPiece implements IPiece {
     final boolean guardsLines;
     final boolean guardsDiagonals;
     final SquareStateEnum squareState;
-    final CoordinatesBuffer coordinatesBuffer;
+    final CoordinatesBuffer guardedCoordinatesBuffer;
 
     AbstractPiece(boolean guardsLines, boolean guardsDiagonals, SquareStateEnum squareState, CoordinatesBuffer coordinatesBuffer) {
         this.guardsLines = guardsLines;
@@ -24,17 +24,17 @@ public abstract class AbstractPiece implements IPiece {
         if (guardsDiagonals) pieceCheckPriority += 1;
         this.checkPriority = pieceCheckPriority;
 
-        this.coordinatesBuffer = coordinatesBuffer;
+        this.guardedCoordinatesBuffer = coordinatesBuffer;
     }
 
     void addSquare(int x, int y, byte boardWidth, byte boardHeight) {
         if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight) {
-            coordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort((byte) x, (byte) y));
+            guardedCoordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort((byte) x, (byte) y));
         }
     }
 
     void addSquareNoChecks(byte x, byte y) {
-        coordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort(x, y));
+        guardedCoordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort(x, y));
     }
 
     void addFullCross(int x, int y, int width, int height) {
