@@ -3,42 +3,54 @@ package chessproblem.model;
 import chessproblem.util.BitUtil;
 
 import java.util.Arrays;
+import java.util.BitSet;
 
 public class Board {
     public final byte width;
     public final byte height;
 
-    private final ISquareState[] squareStates;
+    private final BitSet squattedSquares;
+    private final BitSet guardedSquares;
+    private final short[] piecesPositions;
+    private final PieceTypeEnum[] piecesTypes;
 
     private final int verticalGuardedLines;
-    private final int horizontalGuardedLines;
-    private final int guardedDiagonals;
-    private final int guardedBackDiagonals;
 
     private String representation;
     private int piecesOnBoard = 0;
 
-    public Board(byte width, byte height) {
+    /**
+     * This constructor is used to create pristine version of board, without any pieces on it.
+     * @param width
+     * @param height
+     * @param piecesNumber
+     */
+    public Board(byte width, byte height, int piecesNumber) {
         this.width = width;
         this.height = height;
-        this.squareStates = new ISquareState[this.width * this.height];
+        this.squattedSquares = new BitSet(this.width * this.height);
+        this.guardedSquares = new BitSet(this.width * this.height);
         this.verticalGuardedLines = 0;
-        this.horizontalGuardedLines = 0;
-        this.guardedDiagonals = 0;
-        this.guardedBackDiagonals = 0;
+        this.piecesPositions = new short[piecesNumber];
+        for (int i = 0; i < piecesNumber; i++) {
+            this.piecesPositions[i] = -1;
+        }
+        this.piecesTypes = new PieceTypeEnum[piecesNumber];
     }
 
-    private Board(Board oldBoard, ISquareState[] squareStates, int newHGLines, int newVGLines,
-                  int newGDiagonals, int newGBDiagonals) {
+    /**
+     * This constructor is used when new piece is added on the board.
+     */
+    private Board(Board oldBoard, BitSet newSquattedSquares, BitSet newGuardedSquares, int newVGLines,
+                  short[] newPiecesPositions, PieceTypeEnum[] newPiecesTypes, int newPiecesOnBoard) {
         this.width = oldBoard.width;
         this.height = oldBoard.height;
-        this.squareStates = squareStates;
-
-        this.horizontalGuardedLines = newHGLines;
+        this.squattedSquares = newSquattedSquares;
+        this.guardedSquares = newGuardedSquares;
         this.verticalGuardedLines = newVGLines;
-        this.guardedDiagonals = newGDiagonals;
-        this.guardedBackDiagonals = newGBDiagonals;
-        this.piecesOnBoard++;
+        this.piecesOnBoard = newPiecesOnBoard;
+        this.piecesPositions = newPiecesPositions;
+        this.piecesTypes = newPiecesTypes;
     }
 
     /**
@@ -50,73 +62,78 @@ public class Board {
      * @return new board's state, or nothing
      */
     public Board putPiece(IPiece piece, int x, int y) {
-        ISquareState squareState = squareStates[getBoardPosition(x, y)];
-        if (squareState != null) {
+        boolean squareState = guardedSquares.get(getBoardPosition(x, y));
+        if (squareState) {
             return null;
         } else {
-            short[] attackVectors = piece.getAttackedSquares(x, y, this);
-            for (int i = 0; i < attackVectors.length; i++) {
-                short v = attackVectors[i];
-                if (v == CoordinatesBuffer.COORDINATES_BUFFER_TERMINAL_NUMBER) {
-                    break;
+            BitSet squaresGuardedByPiece = piece.getGuardedSquares(x, y, this);
+
+            BitSet newSquattedSquares = (BitSet) squattedSquares.clone();
+            newSquattedSquares.and(squaresGuardedByPiece);
+            boolean existentPieceUnderAttack = newSquattedSquares.cardinality() != 0;
+            if (existentPieceUnderAttack) {
+                return null;
+            } else {
+                newSquattedSquares = (BitSet) squattedSquares.clone();
+                newSquattedSquares.set(getBoardPosition(x, y));
+
+                BitSet newGuardedSquares = (BitSet) guardedSquares.clone();
+                newGuardedSquares.or(squaresGuardedByPiece);
+                newGuardedSquares.set(getBoardPosition(x, y));
+
+                short[] newPiecesPositions = piecesPositions.clone();
+                newPiecesPositions[piecesOnBoard] = getBoardPosition(x, y);
+
+                PieceTypeEnum[] newPiecesTypes = piecesTypes.clone();
+                newPiecesTypes[piecesOnBoard] = piece.getPieceType();
+
+                // Mark guarded vertical line if needed
+                int newVGLines = this.verticalGuardedLines;
+                if (piece.isGuardsLines()) {
+                    newVGLines = setVerticalGuardedLine(x);
                 }
-                byte attackedSquareX = BitUtil.getFirstByteFromShort(v);
-                byte attackedSquareY = BitUtil.getSecondByteFromShort(v);
-
-                squareState = squareStates[getBoardPosition(attackedSquareX, attackedSquareY)];
-                boolean squareIsSquatted = squareState != null && squareState != AttackedSquare.INSTANCE;
-                if (squareIsSquatted) {
-                    return null;
-                }
+                return new Board(this, newSquattedSquares, newGuardedSquares, newVGLines,
+                        newPiecesPositions, newPiecesTypes, piecesOnBoard + 1);
             }
-
-            ISquareState[] newBoardArray = new ISquareState[this.width * this.height];
-            System.arraycopy(squareStates, 0, newBoardArray, 0, this.width * this.height);
-
-            for (int i = 0; i < attackVectors.length; i++) {
-                short v = attackVectors[i];
-                if (v == CoordinatesBuffer.COORDINATES_BUFFER_TERMINAL_NUMBER) {
-                    break;
-                }
-                newBoardArray[
-                        getBoardPosition(
-                                BitUtil.getFirstByteFromShort(v),
-                                BitUtil.getSecondByteFromShort(v))
-                        ] = AttackedSquare.INSTANCE;
-            }
-
-            newBoardArray[getBoardPosition(x, y)] = piece;
-
-            int newHGLines = this.horizontalGuardedLines;
-            int newVGLines = this.verticalGuardedLines;
-            int newGDiagonals = this.guardedDiagonals;
-            int newGBDiagonals = this.guardedBackDiagonals;
-            if (piece.isGuardsLines()) {
-                newHGLines = setHorizontalLineGuarded(y);
-                newVGLines = setVerticalGuardedLine(x);
-            }
-            if (piece.isGuardsDiagonals()) {
-                newGDiagonals = setDiagonalGuarded(x, y);
-                newGBDiagonals = setBackDiagonalGuarded(x, y);
-            }
-
-            return new Board(this, newBoardArray, newHGLines, newVGLines, newGDiagonals, newGBDiagonals);
         }
     }
+
 
     public String getStringRepresentation() {
         if (representation == null) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < width; i++) {
                 for (int j = 0; j < height; j++) {
-                    ISquareState iSquareState = squareStates[getBoardPosition(i, j)];
-                    sb.append(iSquareState == null ? ". " : iSquareState.toString() + " ");
+                    int pos = getBoardPosition(i, j);
+                    boolean squattedSquare = guardedSquares.get(pos);
+                    if (squattedSquare) {
+                        int pieceNum = getPieceNumByPosition(pos);
+                        if (pieceNum > -1) {
+                            PieceTypeEnum pieceType = piecesTypes[pieceNum];
+                            sb.append(pieceType.getChar()).append(' ');
+                        } else {
+                            sb.append("x ");
+                        }
+                    } else {
+                        sb.append(". ");
+                    }
                 }
                 sb.append("\n");
             }
             representation = sb.toString();
         }
         return representation;
+    }
+
+    private int getPieceNumByPosition(int pos) {
+        int pieceNum = -1;
+        for (int p = 0; p < piecesPositions.length; p++) {
+            if (piecesPositions[p] == pos) {
+                pieceNum = p;
+                break;
+            }
+        }
+        return pieceNum;
     }
 
     @Override
@@ -126,14 +143,48 @@ public class Board {
 
         Board board = (Board) o;
 
-        if (!Arrays.equals(squareStates, board.squareStates)) return false;
+        if (!squattedSquares.equals(board.squattedSquares)) return false;
+        if (piecesPositions.length != board.piecesPositions.length) return false;
+        if (piecesTypes.length != board.piecesTypes.length) return false;
 
-        return true;
+        return comparePieceTypesAndPositions(board);
+    }
+
+    private boolean comparePieceTypesAndPositions(Board board) {
+        boolean positionAndTypesAreEqual = true;
+        for (int i = 0; i < piecesOnBoard; i++) {
+            short pos = piecesPositions[i];
+            int posIndex = board.searchPositionIndex(pos);
+            if (!(posIndex > -1 && piecesTypes[i] == board.piecesTypes[posIndex])) {
+                positionAndTypesAreEqual = false;
+                break;
+            }
+        }
+        return positionAndTypesAreEqual;
+    }
+
+    private int searchPositionIndex(short position) {
+        for (int i = 0; i < piecesOnBoard; i++) {
+            if (this.piecesPositions[i] == position) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(squareStates);
+        int result = squattedSquares.hashCode();
+
+        short[] piecesPositionsCopy = piecesPositions.clone();
+        Arrays.sort(piecesPositionsCopy);
+        result = 31 * result + Arrays.hashCode(piecesPositionsCopy);
+
+        PieceTypeEnum[] piecesTypesCopy = piecesTypes.clone();
+        Arrays.sort(piecesTypesCopy);
+        result = 31 * result + Arrays.hashCode(piecesTypesCopy);
+
+        return result;
     }
 
     @Override
@@ -149,43 +200,15 @@ public class Board {
         return BitUtil.setBit(verticalGuardedLines, x);
     }
 
-    public boolean isHorizontalLineGuarded(int y) {
-        return BitUtil.isBitSet(horizontalGuardedLines, y);
-    }
-
-    public int setHorizontalLineGuarded(int y) {
-        return BitUtil.setBit(horizontalGuardedLines, y);
-    }
-
-    public boolean isDiagonalGuarded(int x, int y) {
-        return BitUtil.isBitSet(guardedDiagonals, getDiagonalNumber(x, y));
-    }
-
-    public int setDiagonalGuarded(int x, int y) {
-        return BitUtil.setBit(guardedDiagonals, getDiagonalNumber(x, y));
-    }
-
-    public boolean isBackDiagonalGuarded(int x, int y) {
-        return BitUtil.isBitSet(guardedBackDiagonals, getBackDiagonalNumber(x, y));
-    }
-
-    public int setBackDiagonalGuarded(int x, int y) {
-        return BitUtil.setBit(guardedBackDiagonals, getBackDiagonalNumber(x, y));
-    }
-
-    private int getDiagonalNumber(int x, int y) {
-        return x - y + this.height;
-    }
-
-    private int getBackDiagonalNumber(int x, int y) {
-        return x + y;
-    }
-
-    private int getBoardPosition(int x, int y) {
-        return x * height + y;
+    private short getBoardPosition(int x, int y) {
+        return (short) (x * height + y);
     }
 
     public int getPiecesOnBoard() {
         return piecesOnBoard;
+    }
+
+    public boolean isSquareSpotted(int x, int y) {
+        return squattedSquares.get(getBoardPosition(x, y));
     }
 }

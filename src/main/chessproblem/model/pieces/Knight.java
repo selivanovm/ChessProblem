@@ -1,18 +1,20 @@
 package chessproblem.model.pieces;
 
 import chessproblem.model.Board;
-import chessproblem.model.CoordinatesBuffer;
-import chessproblem.model.SquareStateEnum;
+import chessproblem.model.GuardedSquaresBuffer;
+import chessproblem.model.PieceTypeEnum;
+
+import java.util.BitSet;
 
 public class Knight extends AbstractPiece {
 
-    public Knight(CoordinatesBuffer coordinatesBuffer) {
-        super(false, false, SquareStateEnum.Knight, coordinatesBuffer);
+    public Knight(GuardedSquaresBuffer guardedSquaresBuffer) {
+        super(false, false, PieceTypeEnum.Knight, guardedSquaresBuffer);
     }
 
     @Override
-    public short[] getAttackedSquares(int x, int y, Board board) {
-        guardedCoordinatesBuffer.resetCoordinatesBuffer();
+    public BitSet getGuardedSquares(int x, int y, Board board) {
+        guardedGuardedSquaresBuffer.reset();
         addSquare(x + 2, y + 1, board.width, board.height);
         addSquare(x - 2, y + 1, board.width, board.height);
 
@@ -24,8 +26,7 @@ public class Knight extends AbstractPiece {
 
         addSquare(x - 1, y + 2, board.width, board.height);
         addSquare(x - 1, y - 2, board.width, board.height);
-        guardedCoordinatesBuffer.sealCoordinatesBuffer();
-        return guardedCoordinatesBuffer.getCoordinates();
+        return guardedGuardedSquaresBuffer.get();
     }
 
     @Override

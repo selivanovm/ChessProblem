@@ -1,9 +1,11 @@
 package chessproblem.model;
 
+import java.util.BitSet;
+
 public interface IPiece extends ISquareState {
 
-    public short[] getAttackedSquares(int x, int y, Board board);
+    public PieceTypeEnum getPieceType();
+    public BitSet getGuardedSquares(int x, int y, Board board);
     public boolean isGuardsLines();
-    public boolean isGuardsDiagonals();
     public int getCheckPriority();
 }

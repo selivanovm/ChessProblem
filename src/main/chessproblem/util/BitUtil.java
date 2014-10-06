@@ -11,15 +11,4 @@ public class BitUtil {
         return x;
     }
 
-    public static short packBytesToShort(byte b1, byte b2) {
-        return (short) ((b1 << 8) | b2);
-    }
-
-    public static byte getFirstByteFromShort(short s) {
-        return (byte)(s >> 8);
-    }
-
-    public static byte getSecondByteFromShort(short s) {
-        return (byte)(s & 0x00FF);
-    }
 }

@@ -1,6 +1,6 @@
 package chessproblem;
 
-import chessproblem.model.CoordinatesBuffer;
+import chessproblem.model.GuardedSquaresBuffer;
 import chessproblem.model.IPiece;
 
 import java.util.Collections;
@@ -23,8 +23,8 @@ class PiecesListBuilder {
         checkForRepeatedPieces(pieceType);
         try {
             for (int i = 0; i < amount; i++) {
-                pieces.add((IPiece) (pieceType.getConstructor(CoordinatesBuffer.class)
-                        .newInstance(new CoordinatesBuffer(this.boardWidth, this.boardHeight))));
+                pieces.add((IPiece) (pieceType.getConstructor(GuardedSquaresBuffer.class)
+                        .newInstance(new GuardedSquaresBuffer(this.boardWidth, this.boardHeight))));
             }
         } catch (Exception e) {
             throw new RuntimeException("Can't create piece of type " + pieceType.getName(), e);

@@ -22,7 +22,7 @@ public class Solver {
 
     public List<Board> solve(List<IPiece> pieces, int width, int height) {
         AtomicInteger counter = new AtomicInteger(0);
-        loop(new Board((byte) width, (byte) height), pieces, counter);
+        loop(new Board((byte) width, (byte) height, pieces.size()), pieces, counter);
         executor.shutdown();
         return new LinkedList<>(results.keySet());
     }
@@ -47,7 +47,7 @@ public class Solver {
         if (!board.isVerticalLineGuarded(x)) {
             List<Future<?>> futures = new LinkedList<>();
             for (int y = 0; y < board.height; y++) {
-                if (!(board.isHorizontalLineGuarded(y) || board.isDiagonalGuarded(x, y) || board.isBackDiagonalGuarded(x, y))) {
+                if (!(board.isSquareSpotted(x, y))) {
                     Board newBoard = board.putPiece(startPiece, x, y);
                     if (newBoard != null) {
                         LinkedList<IPiece> piecesList = new LinkedList<>(newPiecesList);

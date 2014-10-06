@@ -34,7 +34,7 @@ public class Main {
         testCase1();
         testCase2();
         testCase3();
-        //testCase4();
+        testCase4();
     }
 
 
@@ -52,11 +52,16 @@ public class Main {
         expectedResults.add("x x K \nR x x \nx x K \n");
 
         List<Board> results = new Solver().solve(pieces, 3, 3);
+        printResults(results);
+        checkSolutions(results, expectedResults);
+    }
+
+    private static void printResults(List<Board> results) {
+        System.out.println("Results Count = " + results.size());
         for (Board b : results) {
             System.out.print(b);
             System.out.println("===");
         }
-        checkSolutions(results, expectedResults);
     }
 
     private static void testCase2() {
@@ -65,6 +70,7 @@ public class Main {
                 .addPieces(Knight.class, 4)
                 .addPieces(Rook.class, 2)
                 .build();
+
 
         List<String> expectedResult = new LinkedList<>();
         expectedResult.add("R x x x \nx N x N \nx x R x \nx N x N \n");
@@ -75,7 +81,11 @@ public class Main {
         expectedResult.add("x x x R \nN x N x \nx R x x \nN x N x \n");
         expectedResult.add("x N x N \nR x x x \nx N x N \nx x R x \n");
         expectedResult.add("x N x N \nx x R x \nx N x N \nR x x x \n");
-        checkSolutions(new Solver().solve(pieces, 4, 4), expectedResult);
+
+        List<Board> results = new Solver().solve(pieces, 4, 4);
+        expectedResult.forEach(System.out::println);
+        printResults(results);
+        checkSolutions(results, expectedResult);
     }
 
     private static void taskCase() {

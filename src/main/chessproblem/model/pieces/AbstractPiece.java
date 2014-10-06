@@ -1,21 +1,20 @@
 package chessproblem.model.pieces;
 
-import chessproblem.model.CoordinatesBuffer;
+import chessproblem.model.GuardedSquaresBuffer;
 import chessproblem.model.IPiece;
-import chessproblem.model.SquareStateEnum;
-import chessproblem.util.BitUtil;
+import chessproblem.model.PieceTypeEnum;
 
 public abstract class AbstractPiece implements IPiece {
     final int checkPriority;
     final boolean guardsLines;
     final boolean guardsDiagonals;
-    final SquareStateEnum squareState;
-    final CoordinatesBuffer guardedCoordinatesBuffer;
+    final PieceTypeEnum pieceType;
+    final GuardedSquaresBuffer guardedGuardedSquaresBuffer;
 
-    AbstractPiece(boolean guardsLines, boolean guardsDiagonals, SquareStateEnum squareState, CoordinatesBuffer coordinatesBuffer) {
+    AbstractPiece(boolean guardsLines, boolean guardsDiagonals, PieceTypeEnum pieceType, GuardedSquaresBuffer guardedSquaresBuffer) {
         this.guardsLines = guardsLines;
         this.guardsDiagonals = guardsDiagonals;
-        this.squareState = squareState;
+        this.pieceType = pieceType;
 
         // We want to start bruteforce from pieces that maximize guarded squares generation.
         // Pieces with a higher priority are checked in the first place.
@@ -24,28 +23,33 @@ public abstract class AbstractPiece implements IPiece {
         if (guardsDiagonals) pieceCheckPriority += 1;
         this.checkPriority = pieceCheckPriority;
 
-        this.guardedCoordinatesBuffer = coordinatesBuffer;
+        this.guardedGuardedSquaresBuffer = guardedSquaresBuffer;
+    }
+
+    @Override
+    public PieceTypeEnum getPieceType() {
+        return pieceType;
     }
 
     void addSquare(int x, int y, byte boardWidth, byte boardHeight) {
         if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight) {
-            guardedCoordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort((byte) x, (byte) y));
+            addSquareNoChecks((byte) x, (byte) y, boardHeight);
         }
     }
 
-    void addSquareNoChecks(byte x, byte y) {
-        guardedCoordinatesBuffer.writeToCoordinatesBuffer(BitUtil.packBytesToShort(x, y));
+    void addSquareNoChecks(byte x, byte y, int boardHeight) {
+        guardedGuardedSquaresBuffer.setGuardedSquare(x * boardHeight + y);
     }
 
     void addFullCross(int x, int y, int width, int height) {
         for (int i = 0; i < width; i++) {
             if (i != x) {
-                addSquareNoChecks((byte) i, (byte) y);
+                addSquareNoChecks((byte) i, (byte) y, height);
             }
         }
         for (int j = 0; j < height; j++) {
             if (j != y) {
-                addSquareNoChecks((byte) x, (byte) j);
+                addSquareNoChecks((byte) x, (byte) j, height);
             }
         }
     }
@@ -58,22 +62,17 @@ public abstract class AbstractPiece implements IPiece {
         int backDiagonalY = Math.min(height - 1, y + x);
 
         while (diagonalX < width && diagonalY < height) {
-            addSquareNoChecks((byte) (diagonalX++), (byte) (diagonalY++));
+            addSquareNoChecks((byte) (diagonalX++), (byte) (diagonalY++), height);
         }
 
         while (backDiagonalX < width && backDiagonalY >= 0) {
-            addSquareNoChecks((byte) (backDiagonalX++), (byte) (backDiagonalY--));
+            addSquareNoChecks((byte) (backDiagonalX++), (byte) (backDiagonalY--), height);
         }
     }
 
     @Override
     public boolean isGuardsLines() {
         return guardsLines;
-    }
-
-    @Override
-    public boolean isGuardsDiagonals() {
-        return guardsDiagonals;
     }
 
     @Override
@@ -88,14 +87,14 @@ public abstract class AbstractPiece implements IPiece {
 
         AbstractPiece that = (AbstractPiece) o;
 
-        if (squareState != that.squareState) return false;
+        if (pieceType != that.pieceType) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return squareState.hashCode();
+        return pieceType.hashCode();
     }
 
 }
