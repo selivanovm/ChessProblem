@@ -1,14 +1,13 @@
 package chessproblem;
 
 import chessproblem.model.Board;
-import chessproblem.model.IPiece;
+import chessproblem.model.PieceTypeEnum;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is used to find solutions for multiple unguard arrangements problem.
@@ -19,15 +18,30 @@ public class Solver {
     private static final int THREAD_POOL_SIZE = 8;
     private final ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
     private final Map<Board, Integer> results = new ConcurrentHashMap<>();
+    private final List<PieceTypeEnum> pieces = new LinkedList<>();
+    private boolean isBuilt = false;
 
-    public List<Board> solve(List<IPiece> pieces, int width, int height) {
+    private final int boardWidth;
+    private final int boardHeight;
+
+    public Solver(int boardWidth, int boardHeight) {
+        this.boardWidth = boardWidth;
+        this.boardHeight = boardHeight;
+    }
+
+    public List<Board> solve() {
+        this.isBuilt = true;
+        List<PieceTypeEnum> sortedPieces =
+                this.pieces.stream().sorted((p1, p2) -> p1.ordinal() - p2.ordinal()).collect(Collectors.toList());
+
         AtomicInteger counter = new AtomicInteger(0);
-        loop(new Board((byte) width, (byte) height, pieces.size()), pieces, counter);
+        PieceGuardedSquaresCache pieceGuardedSquaresCache = new PieceGuardedSquaresCache(boardWidth, boardHeight);
+        loop(new Board((byte) boardWidth, (byte) boardHeight, sortedPieces.size()), sortedPieces, counter, pieceGuardedSquaresCache);
         executor.shutdown();
         return new LinkedList<>(results.keySet());
     }
 
-    private void loop(Board board, List<IPiece> piecesList, AtomicInteger counter) {
+    private void loop(Board board, List<PieceTypeEnum> piecesList, AtomicInteger counter, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         if (counter.incrementAndGet() % 1000_000 == 0) {
             System.out.println(counter.get() + " > " + results.size());
         }
@@ -35,40 +49,63 @@ public class Solver {
         if (piecesList.isEmpty()) {
             results.putIfAbsent(board, 0);
         } else {
-            IPiece startPiece = piecesList.get(0);
-            List<IPiece> newPiecesList = piecesList.stream().filter(p -> p != startPiece).collect(Collectors.toList());
+            PieceTypeEnum startPiece = piecesList.get(0);
+            List<PieceTypeEnum> newPiecesList = new LinkedList<>(piecesList);
+            newPiecesList.remove(0);
             for (int x = 0; x < board.width; x++) {
-                traverseColumns(board, counter, startPiece, newPiecesList, x);
+                traverseColumns(board, counter, startPiece, newPiecesList, x, pieceGuardedSquaresCache);
             }
         }
     }
 
-    private void traverseColumns(Board board, AtomicInteger counter, IPiece startPiece, List<IPiece> newPiecesList, int x) {
+    private void traverseColumns(Board board, AtomicInteger counter, PieceTypeEnum startPiece, List<PieceTypeEnum> newPiecesList,
+                                 int x, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         if (!board.isVerticalLineGuarded(x)) {
             List<Future<?>> futures = new LinkedList<>();
             for (int y = 0; y < board.height; y++) {
-                if (!(board.isSquareSpotted(x, y))) {
-                    Board newBoard = board.putPiece(startPiece, x, y);
-                    if (newBoard != null) {
-                        LinkedList<IPiece> piecesList = new LinkedList<>(newPiecesList);
+                Board newBoard = board.putPiece(startPiece, x, y, pieceGuardedSquaresCache);
+                if (newBoard != null) {
+                    List<PieceTypeEnum> piecesList = new LinkedList<>(newPiecesList);
 
-                        // to prevent thread pool starving submit tasks only for initial board state
-                        boolean emptyBoard = board.getPiecesOnBoard() == 0;
-                        if (emptyBoard) {
-                            futures.add(executor.submit(() -> loop(newBoard, piecesList, counter)));
-                        } else {
-                            loop(newBoard, piecesList, counter);
-                        }
+                    // to prevent thread pool starving submit tasks only for initial board state
+                    if (board.isEmpty()) {
+                        futures.add(executor.submit(() -> loop(newBoard, piecesList, counter, pieceGuardedSquaresCache)));
+                    } else {
+                        loop(newBoard, piecesList, counter, pieceGuardedSquaresCache);
                     }
                 }
             }
-            for (Future<?> f : futures) {
-                try {
-                    f.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new RuntimeException("Unable to finish subtask.", e);
-                }
+            waitUntilAllTaskEnded(futures);
+        }
+    }
+
+    private void waitUntilAllTaskEnded(List<Future<?>> futures) {
+        for (Future<?> f : futures) {
+            try {
+                f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException("Unable to finish subtask.", e);
             }
         }
     }
+
+    Solver addPieces(PieceTypeEnum pieceType, int amount) {
+        if (!this.isBuilt) {
+            checkForRepeatedPieces(pieceType);
+            for (int i = 0; i < amount; i++) {
+                pieces.add(pieceType);
+            }
+        } else {
+            throw new IllegalStateException("Solver can't be modified after 'build' has been invoked.");
+        }
+        return this;
+    }
+
+    private void checkForRepeatedPieces(PieceTypeEnum pieceType) {
+        Stream<PieceTypeEnum> existentPiecesOfSameType = pieces.stream().filter((p -> p == pieceType));
+        if (existentPiecesOfSameType.iterator().hasNext()) {
+            throw new RuntimeException("Pieces of type '" + pieceType.name() + "' are already added.");
+        }
+    }
+
 }

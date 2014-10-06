@@ -1,6 +1,7 @@
 package chessproblem.model;
 
-import chessproblem.util.BitUtil;
+import chessproblem.PieceGuardedSquaresCache;
+import chessproblem.Util;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -9,21 +10,22 @@ public class Board {
     public final byte width;
     public final byte height;
 
+    // Keeps only squares that have pieces
     private final BitSet squattedSquares;
+    // Keeps both squatted squares and guarded ones
     private final BitSet guardedSquares;
+    // Keeps pieces' positions in the order that pieces were put on the board
     private final short[] piecesPositions;
+    // Keeps pieces' types in the order that pieces were put on the board
     private final PieceTypeEnum[] piecesTypes;
-
     private final int verticalGuardedLines;
+    private int piecesOnBoard = 0;
 
     private String representation;
-    private int piecesOnBoard = 0;
+
 
     /**
      * This constructor is used to create pristine version of board, without any pieces on it.
-     * @param width
-     * @param height
-     * @param piecesNumber
      */
     public Board(byte width, byte height, int piecesNumber) {
         this.width = width;
@@ -56,17 +58,14 @@ public class Board {
     /**
      * Put piece on board, check if it attacks some other pieces, if it doesn't then return board with a new state,
      * otherwise return null.
-     * @param piece piece to put
-     * @param x square to put on - x coordinate
-     * @param y square to put on - y coordinate
-     * @return new board's state, or nothing
      */
-    public Board putPiece(IPiece piece, int x, int y) {
-        boolean squareState = guardedSquares.get(getBoardPosition(x, y));
+    public Board putPiece(PieceTypeEnum piece, int x, int y, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
+        int piecePosition = Util.calcArrayPosition(x, y, height);
+        boolean squareState = guardedSquares.get(piecePosition);
         if (squareState) {
             return null;
         } else {
-            BitSet squaresGuardedByPiece = piece.getGuardedSquares(x, y, this);
+            BitSet squaresGuardedByPiece = pieceGuardedSquaresCache.getGuardedSquares(piece, x, y);
 
             BitSet newSquattedSquares = (BitSet) squattedSquares.clone();
             newSquattedSquares.and(squaresGuardedByPiece);
@@ -75,21 +74,21 @@ public class Board {
                 return null;
             } else {
                 newSquattedSquares = (BitSet) squattedSquares.clone();
-                newSquattedSquares.set(getBoardPosition(x, y));
+                newSquattedSquares.set(piecePosition);
 
                 BitSet newGuardedSquares = (BitSet) guardedSquares.clone();
                 newGuardedSquares.or(squaresGuardedByPiece);
-                newGuardedSquares.set(getBoardPosition(x, y));
+                newGuardedSquares.set(piecePosition);
 
                 short[] newPiecesPositions = piecesPositions.clone();
-                newPiecesPositions[piecesOnBoard] = getBoardPosition(x, y);
+                newPiecesPositions[piecesOnBoard] = (short) piecePosition;
 
                 PieceTypeEnum[] newPiecesTypes = piecesTypes.clone();
-                newPiecesTypes[piecesOnBoard] = piece.getPieceType();
+                newPiecesTypes[piecesOnBoard] = piece;
 
                 // Mark guarded vertical line if needed
                 int newVGLines = this.verticalGuardedLines;
-                if (piece.isGuardsLines()) {
+                if (piece.isGuardLines()) {
                     newVGLines = setVerticalGuardedLine(x);
                 }
                 return new Board(this, newSquattedSquares, newGuardedSquares, newVGLines,
@@ -104,7 +103,7 @@ public class Board {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < width; i++) {
                 for (int j = 0; j < height; j++) {
-                    int pos = getBoardPosition(i, j);
+                    int pos = Util.calcArrayPosition(i, j, height);
                     boolean squattedSquare = guardedSquares.get(pos);
                     if (squattedSquare) {
                         int pieceNum = getPieceNumByPosition(pos);
@@ -136,6 +135,10 @@ public class Board {
         return pieceNum;
     }
 
+    /**
+     * Used only for putting solution into result map.
+     * On incomplete solution will raise NPE, since piecesTypes contains nulls
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -148,6 +151,24 @@ public class Board {
         if (piecesTypes.length != board.piecesTypes.length) return false;
 
         return comparePieceTypesAndPositions(board);
+    }
+
+    /**
+     * Used only for putting solution into result map.
+     */
+    @Override
+    public int hashCode() {
+        int result = squattedSquares.hashCode();
+
+        short[] piecesPositionsCopy = piecesPositions.clone();
+        Arrays.sort(piecesPositionsCopy);
+        result = 31 * result + Arrays.hashCode(piecesPositionsCopy);
+
+        PieceTypeEnum[] piecesTypesCopy = piecesTypes.clone();
+        Arrays.sort(piecesTypesCopy);
+        result = 31 * result + Arrays.hashCode(piecesTypesCopy);
+
+        return result;
     }
 
     private boolean comparePieceTypesAndPositions(Board board) {
@@ -173,42 +194,20 @@ public class Board {
     }
 
     @Override
-    public int hashCode() {
-        int result = squattedSquares.hashCode();
-
-        short[] piecesPositionsCopy = piecesPositions.clone();
-        Arrays.sort(piecesPositionsCopy);
-        result = 31 * result + Arrays.hashCode(piecesPositionsCopy);
-
-        PieceTypeEnum[] piecesTypesCopy = piecesTypes.clone();
-        Arrays.sort(piecesTypesCopy);
-        result = 31 * result + Arrays.hashCode(piecesTypesCopy);
-
-        return result;
-    }
-
-    @Override
     public String toString() {
         return getStringRepresentation();
     }
 
     public boolean isVerticalLineGuarded(int x) {
-        return BitUtil.isBitSet(verticalGuardedLines, x);
+        return Util.isBitSet(verticalGuardedLines, x);
     }
 
     public int setVerticalGuardedLine(int x) {
-        return BitUtil.setBit(verticalGuardedLines, x);
+        return Util.setBit(verticalGuardedLines, x);
     }
 
-    private short getBoardPosition(int x, int y) {
-        return (short) (x * height + y);
+    public boolean isEmpty() {
+        return piecesOnBoard == 0;
     }
 
-    public int getPiecesOnBoard() {
-        return piecesOnBoard;
-    }
-
-    public boolean isSquareSpotted(int x, int y) {
-        return squattedSquares.get(getBoardPosition(x, y));
-    }
 }

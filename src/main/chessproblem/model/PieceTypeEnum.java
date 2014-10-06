@@ -1,7 +1,10 @@
 package chessproblem.model;
 
 public enum PieceTypeEnum {
-    Bishop, King, Knight, Queen, Rook;
+    // Order is important, in that order solver puts pieces on the board.
+    // Pieces with higher number of guarding possibilities(like Queen, Rook, Bishop) should be put
+    // in the first place, that decreases iterations count.
+    Queen, Rook, Bishop, Knight, King;
 
     public char getChar() {
         if (this != Knight) {
@@ -9,5 +12,9 @@ public enum PieceTypeEnum {
         } else {
             return 'N';
         }
+    }
+
+    public boolean isGuardLines() {
+        return this == Queen || this == Rook;
     }
 }

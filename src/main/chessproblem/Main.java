@@ -1,8 +1,7 @@
 package chessproblem;
 
 import chessproblem.model.Board;
-import chessproblem.model.IPiece;
-import chessproblem.model.pieces.*;
+import static chessproblem.model.PieceTypeEnum.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -12,10 +11,10 @@ public class Main {
     public static void main(String[] args) {
         runTests();
         runPerfTest();
-        taskCase();
     }
 
     private static void runPerfTest() {
+        System.out.println("Start Perf Test");
         long start = System.currentTimeMillis();
         List<Board> solutions = null;
         for (int i = 0; i < 100; i++) {
@@ -35,15 +34,16 @@ public class Main {
         testCase2();
         testCase3();
         testCase4();
+        testCase5();
     }
-
 
     private static void testCase1() {
         System.out.println("Start Test #1");
-        List<IPiece> pieces = new PiecesListBuilder(3, 3)
-                .addPieces(King.class, 2)
-                .addPieces(Rook.class, 1)
-                .build();
+
+        List<Board> results = new Solver(3, 3)
+                .addPieces(King, 2)
+                .addPieces(Rook, 1)
+                .solve();
 
         List<String> expectedResults = new LinkedList<>();
         expectedResults.add("K x K \nx x x \nx R x \n");
@@ -51,7 +51,6 @@ public class Main {
         expectedResults.add("x R x \nx x x \nK x K \n");
         expectedResults.add("x x K \nR x x \nx x K \n");
 
-        List<Board> results = new Solver().solve(pieces, 3, 3);
         printResults(results);
         checkSolutions(results, expectedResults);
     }
@@ -66,11 +65,10 @@ public class Main {
 
     private static void testCase2() {
         System.out.println("Start Test #2");
-        List<IPiece> pieces= new PiecesListBuilder(4, 4)
-                .addPieces(Knight.class, 4)
-                .addPieces(Rook.class, 2)
-                .build();
 
+        List<Board> results = new Solver(4, 4)
+                .addPieces(Knight, 4)
+                .addPieces(Rook, 2).solve();
 
         List<String> expectedResult = new LinkedList<>();
         expectedResult.add("R x x x \nx N x N \nx x R x \nx N x N \n");
@@ -82,51 +80,14 @@ public class Main {
         expectedResult.add("x N x N \nR x x x \nx N x N \nx x R x \n");
         expectedResult.add("x N x N \nx x R x \nx N x N \nR x x x \n");
 
-        List<Board> results = new Solver().solve(pieces, 4, 4);
+
         expectedResult.forEach(System.out::println);
         printResults(results);
         checkSolutions(results, expectedResult);
     }
 
-    private static void taskCase() {
-        System.out.println("Start Task Case");
-        long start = System.currentTimeMillis();
-        List<IPiece> pieces = new PiecesListBuilder(7, 7)
-                .addPieces(King.class, 2)
-                .addPieces(Queen.class, 2)
-                .addPieces(Bishop.class, 2)
-                .addPieces(Knight.class, 1)
-                .build();
-
-        Solver solver = new Solver();
-        List<Board> solve = solver.solve(pieces, 7, 7);
-        int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
-        System.out.printf("Task time: %d sec. Result: %d\n", durationSec, solve.size());
-
-        assert solve.size() == 3063828;
-    }
-
-    private static List<Board> perfTestCase() {
-        System.out.println("Start Perf Test");
-        List<IPiece> pieces = new PiecesListBuilder(6, 6)
-                .addPieces(King.class, 2)
-                .addPieces(Queen.class, 4)
-                .addPieces(Bishop.class, 2)
-                .addPieces(Knight.class, 1)
-                .build();
-
-        //System.out.println(pieces);
-
-        Solver solver = new Solver();
-        return solver.solve(pieces, 6, 6);
-    }
-
     private static void testCase3() {
         System.out.println("Start Test #3");
-        List<IPiece> pieces = new PiecesListBuilder(4, 4)
-                .addPieces(Queen.class, 2)
-                .addPieces(Knight.class, 1)
-                .build();
 
         List<String> expectedResult = new LinkedList<>();
         expectedResult.add("N . x x \nx x x Q \n. x x x \nx x Q x \n");
@@ -137,16 +98,38 @@ public class Main {
         expectedResult.add("x x Q x \n. x x x \nx x x Q \nN . x x \n");
         expectedResult.add("x x . N \nQ x x x \nx x x . \nx Q x x \n");
         expectedResult.add("x . x N \nx x x . \nQ x x x \nx x Q x \n");
-        checkSolutions(new Solver().solve(pieces, 4, 4), expectedResult);
+        checkSolutions(new Solver(4, 4)
+                .addPieces(Queen, 2)
+                .addPieces(Knight, 1).solve(), expectedResult);
     }
 
     private static void testCase4() {
         System.out.println("Start Test #4");
-        List<IPiece> pieces = new PiecesListBuilder(8, 8)
-                .addPieces(Queen.class, 8)
-                .build();
+        List<Board> results = new Solver(8, 8).addPieces(Queen, 8).solve();
+        assert results.size() == 92;
+    }
 
-        assert new Solver().solve(pieces, 8, 8).size() == 92;
+    private static void testCase5() {
+        System.out.println("Start Task Case");
+        long start = System.currentTimeMillis();
+        List<Board> results = new Solver(7, 7)
+                .addPieces(King, 2)
+                .addPieces(Queen, 2)
+                .addPieces(Bishop, 2)
+                .addPieces(Knight, 1)
+                .solve();
+        int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
+        System.out.printf("Task time: %d sec. Result: %d\n", durationSec, results.size());
+        assert results.size() == 3063828;
+    }
+
+    private static List<Board> perfTestCase() {
+        return new Solver(6, 6)
+                .addPieces(King, 2)
+                .addPieces(Queen, 4)
+                .addPieces(Bishop, 2)
+                .addPieces(Knight, 1)
+                .solve();
     }
 
     private static void checkSolutions(List<Board> solutions, List<String> expectedResults) {
