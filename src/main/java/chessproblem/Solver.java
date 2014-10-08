@@ -1,9 +1,8 @@
 package chessproblem;
 
-import chessproblem.model.Board;
-import chessproblem.model.PieceTypeEnum;
-
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -19,7 +18,7 @@ public class Solver {
     private final ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
     private final Map<Board, Integer> results = new ConcurrentHashMap<>();
     private final List<PieceTypeEnum> pieces = new LinkedList<>();
-    private boolean isBuilt = false;
+    private boolean started = false;
 
     private final int boardWidth;
     private final int boardHeight;
@@ -29,8 +28,8 @@ public class Solver {
         this.boardHeight = boardHeight;
     }
 
-    public List<Board> solve() {
-        this.isBuilt = true;
+    public Result solve() {
+        this.started = true;
         List<PieceTypeEnum> sortedPieces =
                 this.pieces.stream().sorted((p1, p2) -> p1.ordinal() - p2.ordinal()).collect(Collectors.toList());
 
@@ -38,14 +37,16 @@ public class Solver {
         PieceGuardedSquaresCache pieceGuardedSquaresCache = new PieceGuardedSquaresCache(boardWidth, boardHeight);
         loop(new Board((byte) boardWidth, (byte) boardHeight, sortedPieces.size()), sortedPieces, counter, pieceGuardedSquaresCache);
         executor.shutdown();
-        return new LinkedList<>(results.keySet());
+        return new Result(new LinkedList<>(results.keySet()), counter.get());
     }
 
+    /**
+     * Loop takes piece from the list, which contains all pieces in the decreasing order of their power, and tries to
+     * put it on each square of the board, for each square and piece it recursively tries to put on the board
+     * next piece from list until it gets solution or position where piece is on the guarded square.
+     */
     private void loop(Board board, List<PieceTypeEnum> piecesList, AtomicInteger counter, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
-        if (counter.incrementAndGet() % 1000_000 == 0) {
-            System.out.println(counter.get() + " > " + results.size());
-        }
-
+        counter.incrementAndGet();
         if (piecesList.isEmpty()) {
             results.putIfAbsent(board, 0);
         } else {
@@ -53,50 +54,52 @@ public class Solver {
             List<PieceTypeEnum> newPiecesList = new LinkedList<>(piecesList);
             newPiecesList.remove(0);
             for (int x = 0; x < board.width; x++) {
-                traverseColumns(board, counter, startPiece, newPiecesList, x, pieceGuardedSquaresCache);
+                traverseRows(board, counter, startPiece, newPiecesList, x, pieceGuardedSquaresCache);
             }
         }
     }
 
-    private void traverseColumns(Board board, AtomicInteger counter, PieceTypeEnum startPiece, List<PieceTypeEnum> newPiecesList,
-                                 int x, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
+    private void traverseRows(Board board, AtomicInteger counter, PieceTypeEnum startPiece, List<PieceTypeEnum> newPiecesList,
+                              int x, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
+        List<Future<?>> futures = board.isEmpty() ? new LinkedList<>() : null;
         if (!board.isVerticalLineGuarded(x)) {
-            List<Future<?>> futures = new LinkedList<>();
             for (int y = 0; y < board.height; y++) {
                 Board newBoard = board.putPiece(startPiece, x, y, pieceGuardedSquaresCache);
                 if (newBoard != null) {
                     List<PieceTypeEnum> piecesList = new LinkedList<>(newPiecesList);
 
                     // to prevent thread pool starving submit tasks only for initial board state
-                    if (board.isEmpty()) {
+                    if (futures != null) {
                         futures.add(executor.submit(() -> loop(newBoard, piecesList, counter, pieceGuardedSquaresCache)));
                     } else {
                         loop(newBoard, piecesList, counter, pieceGuardedSquaresCache);
                     }
                 }
             }
-            waitUntilAllTaskEnded(futures);
         }
+        waitUntilAllTaskEnded(futures);
     }
 
     private void waitUntilAllTaskEnded(List<Future<?>> futures) {
-        for (Future<?> f : futures) {
-            try {
-                f.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException("Unable to finish subtask.", e);
+        if (futures != null) {
+            for (Future<?> f : futures) {
+                try {
+                    f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException("Unable to finish subtask.", e);
+                }
             }
         }
     }
 
     Solver addPieces(PieceTypeEnum pieceType, int amount) {
-        if (!this.isBuilt) {
+        if (!this.started) {
             checkForRepeatedPieces(pieceType);
             for (int i = 0; i < amount; i++) {
                 pieces.add(pieceType);
             }
         } else {
-            throw new IllegalStateException("Solver can't be modified after 'build' has been invoked.");
+            throw new IllegalStateException("Solver can't be modified after 'solve' has been invoked.");
         }
         return this;
     }

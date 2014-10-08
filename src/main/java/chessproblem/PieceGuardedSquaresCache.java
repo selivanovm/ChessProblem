@@ -1,13 +1,11 @@
 package chessproblem;
 
-import chessproblem.model.PieceTypeEnum;
-
 import java.util.BitSet;
 
 public class PieceGuardedSquaresCache {
 
-    private int boardWidth;
-    private int boardHeight;
+    private final int boardWidth;
+    private final int boardHeight;
     private final BitSet[][] guardedSquaresMasks;
 
     public PieceGuardedSquaresCache(int boardWidth, int boardHeight) {

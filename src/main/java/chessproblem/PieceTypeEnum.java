@@ -1,4 +1,4 @@
-package chessproblem.model;
+package chessproblem;
 
 public enum PieceTypeEnum {
     // Order is important, in that order solver puts pieces on the board.

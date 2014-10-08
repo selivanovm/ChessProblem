@@ -1,7 +1,4 @@
-package chessproblem.model;
-
-import chessproblem.PieceGuardedSquaresCache;
-import chessproblem.Util;
+package chessproblem;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -20,7 +17,7 @@ public class Board {
     private final PieceTypeEnum[] piecesTypes;
     private final int verticalGuardedLines;
     private int piecesOnBoard = 0;
-
+    private final short[] maxPiecePosition;
     private String representation;
 
 
@@ -38,13 +35,14 @@ public class Board {
             this.piecesPositions[i] = -1;
         }
         this.piecesTypes = new PieceTypeEnum[piecesNumber];
+        this.maxPiecePosition = new short[PieceTypeEnum.values().length];
     }
 
     /**
      * This constructor is used when new piece is added on the board.
      */
     private Board(Board oldBoard, BitSet newSquattedSquares, BitSet newGuardedSquares, int newVGLines,
-                  short[] newPiecesPositions, PieceTypeEnum[] newPiecesTypes, int newPiecesOnBoard) {
+                  short[] newPiecesPositions, PieceTypeEnum[] newPiecesTypes, int newPiecesOnBoard, short[] newMaxPiecePosition) {
         this.width = oldBoard.width;
         this.height = oldBoard.height;
         this.squattedSquares = newSquattedSquares;
@@ -53,6 +51,7 @@ public class Board {
         this.piecesOnBoard = newPiecesOnBoard;
         this.piecesPositions = newPiecesPositions;
         this.piecesTypes = newPiecesTypes;
+        this.maxPiecePosition = newMaxPiecePosition;
     }
 
     /**
@@ -62,7 +61,8 @@ public class Board {
     public Board putPiece(PieceTypeEnum piece, int x, int y, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         int piecePosition = Util.calcArrayPosition(x, y, height);
         boolean squareState = guardedSquares.get(piecePosition);
-        if (squareState) {
+        boolean alreadyCheckedThisPosition = maxPiecePosition[piece.ordinal()] > piecePosition;
+        if (squareState || alreadyCheckedThisPosition) {
             return null;
         } else {
             BitSet squaresGuardedByPiece = pieceGuardedSquaresCache.getGuardedSquares(piece, x, y);
@@ -86,19 +86,22 @@ public class Board {
                 PieceTypeEnum[] newPiecesTypes = piecesTypes.clone();
                 newPiecesTypes[piecesOnBoard] = piece;
 
+                short[] newMaxPiecePosition = maxPiecePosition.clone();
+                newMaxPiecePosition[piece.ordinal()] = (short) piecePosition;
+
                 // Mark guarded vertical line if needed
                 int newVGLines = this.verticalGuardedLines;
                 if (piece.isGuardLines()) {
                     newVGLines = setVerticalGuardedLine(x);
                 }
                 return new Board(this, newSquattedSquares, newGuardedSquares, newVGLines,
-                        newPiecesPositions, newPiecesTypes, piecesOnBoard + 1);
+                        newPiecesPositions, newPiecesTypes, piecesOnBoard + 1, newMaxPiecePosition);
             }
         }
     }
 
 
-    public String getStringRepresentation() {
+    String getStringRepresentation() {
         if (representation == null) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < width; i++) {
@@ -202,7 +205,7 @@ public class Board {
         return Util.isBitSet(verticalGuardedLines, x);
     }
 
-    public int setVerticalGuardedLine(int x) {
+    int setVerticalGuardedLine(int x) {
         return Util.setBit(verticalGuardedLines, x);
     }
 
