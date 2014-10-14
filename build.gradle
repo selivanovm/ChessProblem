@@ -7,6 +7,10 @@ applicationDefaultJvmArgs = ["-Xms2G", "-Xmx2G", "-ea"]
 sourceCompatibility = 1.8
 version = '1.0'
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.1'
+}
+
 jar {
     manifest {
         attributes 'Implementation-Title': 'ChessProblem',
