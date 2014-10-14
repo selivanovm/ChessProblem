@@ -73,10 +73,6 @@ public class BoardsSet {
     public static class Node {
         Node left, right;
         List<int[]> pieces;
-
-        public Node() {
-        }
-
     }
 
     public static class SolutionInfo {

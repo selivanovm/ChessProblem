@@ -27,4 +27,11 @@ public class Util {
         return (short) (i & 0x0000FFFF);
     }
 
+    public static Integer parseInt(String s) {
+        try {
+            return Integer.valueOf(s);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

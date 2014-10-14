@@ -29,11 +29,20 @@ public class Solver {
     private final int boardHeight;
 
     public Solver(int boardWidth, int boardHeight) {
+        if (boardWidth < 0 || boardWidth > 255) {
+            throw new IllegalArgumentException("Board width should be in range 1-255.");
+        }
+        if (boardHeight < 0 || boardHeight > 255) {
+            throw new IllegalArgumentException("Board height should be in range 1-255.");
+        }
+
         this.boardWidth = boardWidth;
         this.boardHeight = boardHeight;
     }
 
     public Result solve() {
+        logger.info("Start solving: board {}x{}, pieces = [{}]", this.boardWidth, this.boardHeight, getBoardPiecesString());
+
         long start = System.currentTimeMillis();
 
         this.started = true;
@@ -53,6 +62,16 @@ public class Solver {
         int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
         logger.info("Operation took {} sec. Found {} solutions. Run {} loops.", durationSec, solutionsSet.size(), counter.get());
         return new Result(solutionsSet, counter.get());
+    }
+
+    private String getBoardPiecesString() {
+        return pieces.stream().map(PieceTypeEnum::name).reduce("", (acc, b) -> {
+            if (acc.isEmpty()) {
+                return b;
+            } else {
+                return acc + ", " + b;
+            }
+        });
     }
 
     /**

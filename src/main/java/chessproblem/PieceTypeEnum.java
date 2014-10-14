@@ -1,5 +1,9 @@
 package chessproblem;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 public enum PieceTypeEnum {
     // Order is important, in that order solver puts pieces on the board.
     // Pieces with higher number of guarding possibilities(like Queen, Rook, Bishop) should be put
@@ -16,5 +20,9 @@ public enum PieceTypeEnum {
 
     public boolean isGuardLines() {
         return this == Queen || this == Rook;
+    }
+
+    public static Optional<PieceTypeEnum> getByChar(char c) {
+        return Arrays.asList(PieceTypeEnum.values()).stream().filter((pieceType) -> pieceType.getChar() == c).findFirst();
     }
 }

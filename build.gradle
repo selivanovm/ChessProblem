@@ -2,10 +2,17 @@ apply plugin: 'java'
 apply plugin:'application'
 
 mainClassName = "chessproblem.Main"
-applicationDefaultJvmArgs = ["-Xms2G", "-Xmx2G", "-ea"]
+// applicationDefaultJvmArgs = ["-Xms2G", "-Xmx2G"]
 
 sourceCompatibility = 1.8
 version = '1.0'
+
+run {
+    standardInput = System.in
+    if ( project.hasProperty('args') ) {
+        args project.args.split('\\s+')
+    }
+}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.1'
@@ -28,4 +35,6 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.7'
     compile 'ch.qos.logback:logback-core:1.1.2'
     compile 'ch.qos.logback:logback-classic:1.1.2'
+
+    compile 'commons-cli:commons-cli:1.2'
 }
