@@ -3,11 +3,12 @@ package chessproblem;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class BoardsSet {
 
-    private int nodesCount = 0;
+    private AtomicInteger nodesCount = new AtomicInteger();
 
     private Node root = new Node();
 
@@ -23,7 +24,6 @@ public class BoardsSet {
 
     private void processNode(Consumer<SolutionInfo> nodeFn, BitSet bitSet, int bitNumber, Node nodeLeft, boolean bitState) {
         if (nodeLeft != null) {
-            //System.out.println("LEFT " + bitNumber);
             boolean prefBit = bitSet.get(bitNumber);
             bitSet.set(bitNumber, bitState);
             processSolutions(nodeFn, nodeLeft, bitSet, bitNumber + 1);
@@ -32,25 +32,20 @@ public class BoardsSet {
     }
 
     synchronized public void addBoard(Board board) {
-        //System.out.println("NEW BOARD | " + board.squattedSquares.length() + "\n" + board.getStringRepresentation());
         Node prevNode = root;
         Node node = null;
         for (int i = 0; i < board.squattedSquares.length(); i++) {
             if (board.squattedSquares.get(i)) {
-                //System.out.println("SET RIGHT " + i);
                 node = prevNode.right;
             } else {
-                //System.out.println("SET LEFT " + i);
                 node = prevNode.left;
             }
             if (node == null) {
                 for (int j = i; j < board.squattedSquares.length(); j++) {
                     node = new Node();
                     if (board.squattedSquares.get(j)) {
-                        //System.out.println("SET RIGHT " + j);
                         prevNode.right = node;
                     } else {
-                        //System.out.println("SET LEFT " + j);
                         prevNode.left = node;
                     }
                     prevNode = node;
@@ -67,12 +62,12 @@ public class BoardsSet {
         int idx = pieces.indexOf(board.pieces);
         if (idx < 0) {
             node.pieces.add(board.pieces.clone());
-            nodesCount++;
+            nodesCount.incrementAndGet();
         }
     }
 
     public int size() {
-        return nodesCount;
+        return nodesCount.get();
     }
 
     public static class Node {
@@ -82,11 +77,6 @@ public class BoardsSet {
         public Node() {
         }
 
-        public Node(Node left, Node right, List<int[]> pieces) {
-            this.left = left;
-            this.right = right;
-            this.pieces = pieces;
-        }
     }
 
     public static class SolutionInfo {

@@ -72,7 +72,6 @@ public class Board {
                 tmpBoard.guardedSquares.or(squaresGuardedByPiece);
                 tmpBoard.guardedSquares.set(piecePosition);
 
-//                System.out.println(">>> " + tmpBoard.piecesPositions.length + " >> " + piecesOnBoard);
                 int positionAndType = Util.packShortsToInt((short) piecePosition, (short) piece.ordinal());
                 tmpBoard.pieces[piecesOnBoard] = positionAndType;
                 tmpBoard.maxPiecePosition[piece.ordinal()] = (short) piecePosition;

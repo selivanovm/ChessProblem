@@ -1,5 +1,8 @@
 package chessproblem;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,6 +16,8 @@ import java.util.stream.Stream;
  * It isn't thread safe due to usage of global shared CoordinatesBuffer.
  */
 public class Solver {
+
+    private static final Logger logger = LoggerFactory.getLogger(Solver.class);
 
     private final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private final List<PieceTypeEnum> pieces = new LinkedList<>();
@@ -29,6 +34,8 @@ public class Solver {
     }
 
     public Result solve() {
+        long start = System.currentTimeMillis();
+
         this.started = true;
         List<PieceTypeEnum> sortedPieces =
                 new ArrayList<>(this.pieces.stream().sorted((p1, p2) -> p1.ordinal() - p2.ordinal()).collect(Collectors.toList()));
@@ -42,7 +49,9 @@ public class Solver {
 
         loop(boards, 0, pristineBoard.getCopy(), sortedPieces, counter, pieceGuardedSquaresCache);
         executor.shutdown();
-        System.out.println("Binary cache size = " + solutionsSet.size());
+
+        int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
+        logger.info("Operation took {} sec. Found {} solutions.", durationSec, solutionsSet.size());
         return new Result(solutionsSet, counter.get());
     }
 
@@ -53,9 +62,12 @@ public class Solver {
      */
     private void loop(Board[] boards, int pieceNumber, Board tmpBoard, List<PieceTypeEnum> piecesList, AtomicInteger counter, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         counter.incrementAndGet();
-        if (counter.get() % 1000000 == 0) {
-            System.out.println(">>> " + counter.get() + " >> " + solutionsSet.size());
+
+        int loopsCount = counter.get();
+        if (loopsCount % 1000000 == 0) {
+            logger.info("Loops count = {}. Solutions count = {}", loopsCount, solutionsSet.size());
         }
+
         Board board = boards[pieceNumber];
         if (pieceNumber == piecesList.size()) {
             solutionsSet.addBoard(board);
