@@ -23,7 +23,7 @@ public class Solver {
     private final List<PieceTypeEnum> pieces = new LinkedList<>();
     private boolean started = false;
 
-    private BoardsSet solutionsSet = new BoardsSet();
+    private final BoardsSet solutionsSet = new BoardsSet();
 
     private final int boardWidth;
     private final int boardHeight;
@@ -51,7 +51,7 @@ public class Solver {
         executor.shutdown();
 
         int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
-        logger.info("Operation took {} sec. Found {} solutions.", durationSec, solutionsSet.size());
+        logger.info("Operation took {} sec. Found {} solutions. Run {} loops.", durationSec, solutionsSet.size(), counter.get());
         return new Result(solutionsSet, counter.get());
     }
 

@@ -219,7 +219,7 @@ public class SolverTest {
     }
 
     private static class ExpectedResultBuilder {
-        private List<String> boardRepresentationList = new LinkedList<>();
+        private final List<String> boardRepresentationList = new LinkedList<>();
         private String boardRepresentation = "";
 
         void addBoard(String boardRepresentation) {

@@ -8,9 +8,9 @@ import java.util.function.Consumer;
 
 public class BoardsSet {
 
-    private AtomicInteger nodesCount = new AtomicInteger();
+    private final AtomicInteger nodesCount = new AtomicInteger();
 
-    private Node root = new Node();
+    private final Node root = new Node();
 
     public void processSolutions(Consumer<SolutionInfo> nodeFn) {
         processSolutions(nodeFn, root, new BitSet(), 0);
@@ -80,8 +80,8 @@ public class BoardsSet {
     }
 
     public static class SolutionInfo {
-        BitSet bitSet;
-        Node node;
+        final BitSet bitSet;
+        final Node node;
 
         public SolutionInfo(Node node, BitSet bitSet) {
             this.node = node;
