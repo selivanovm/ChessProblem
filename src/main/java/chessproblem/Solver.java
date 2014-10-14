@@ -1,8 +1,8 @@
 package chessproblem;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -14,11 +14,11 @@ import java.util.stream.Stream;
  */
 public class Solver {
 
-    private static final int THREAD_POOL_SIZE = 8;
-    private final ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-    private final Map<Board, Integer> results = new ConcurrentHashMap<>();
+    private final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private final List<PieceTypeEnum> pieces = new LinkedList<>();
     private boolean started = false;
+
+    private BoardsSet solutionsSet = new BoardsSet();
 
     private final int boardWidth;
     private final int boardHeight;
@@ -31,13 +31,19 @@ public class Solver {
     public Result solve() {
         this.started = true;
         List<PieceTypeEnum> sortedPieces =
-                this.pieces.stream().sorted((p1, p2) -> p1.ordinal() - p2.ordinal()).collect(Collectors.toList());
+                new ArrayList<>(this.pieces.stream().sorted((p1, p2) -> p1.ordinal() - p2.ordinal()).collect(Collectors.toList()));
 
         AtomicInteger counter = new AtomicInteger(0);
         PieceGuardedSquaresCache pieceGuardedSquaresCache = new PieceGuardedSquaresCache(boardWidth, boardHeight);
-        loop(new Board((byte) boardWidth, (byte) boardHeight, sortedPieces.size()), sortedPieces, counter, pieceGuardedSquaresCache);
+
+        Board pristineBoard = new Board((byte) boardWidth, (byte) boardHeight, sortedPieces.size());
+        Board[] boards = new Board[sortedPieces.size() + 1];
+        boards[0] = pristineBoard;
+
+        loop(boards, 0, pristineBoard.getCopy(), sortedPieces, counter, pieceGuardedSquaresCache);
         executor.shutdown();
-        return new Result(new LinkedList<>(results.keySet()), counter.get());
+        System.out.println("Binary cache size = " + solutionsSet.size());
+        return new Result(solutionsSet, counter.get());
     }
 
     /**
@@ -45,34 +51,47 @@ public class Solver {
      * put it on each square of the board, for each square and piece it recursively tries to put on the board
      * next piece from list until it gets solution or position where piece is on the guarded square.
      */
-    private void loop(Board board, List<PieceTypeEnum> piecesList, AtomicInteger counter, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
+    private void loop(Board[] boards, int pieceNumber, Board tmpBoard, List<PieceTypeEnum> piecesList, AtomicInteger counter, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         counter.incrementAndGet();
-        if (piecesList.isEmpty()) {
-            results.putIfAbsent(board, 0);
+        if (counter.get() % 1000000 == 0) {
+            System.out.println(">>> " + counter.get() + " >> " + solutionsSet.size());
+        }
+        Board board = boards[pieceNumber];
+        if (pieceNumber == piecesList.size()) {
+            solutionsSet.addBoard(board);
         } else {
-            PieceTypeEnum startPiece = piecesList.get(0);
-            List<PieceTypeEnum> newPiecesList = new LinkedList<>(piecesList);
-            newPiecesList.remove(0);
             for (int x = 0; x < board.width; x++) {
-                traverseRows(board, counter, startPiece, newPiecesList, x, pieceGuardedSquaresCache);
+                traverseRows(boards, pieceNumber, tmpBoard, counter, piecesList, x, pieceGuardedSquaresCache);
             }
         }
     }
 
-    private void traverseRows(Board board, AtomicInteger counter, PieceTypeEnum startPiece, List<PieceTypeEnum> newPiecesList,
+    private void traverseRows(Board[] boards, int pieceNumber, Board tmpBoard, AtomicInteger counter, List<PieceTypeEnum> piecesList,
                               int x, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
+        Board board = boards[pieceNumber];
+
         List<Future<?>> futures = board.isEmpty() ? new LinkedList<>() : null;
         if (!board.isVerticalLineGuarded(x)) {
             for (int y = 0; y < board.height; y++) {
-                Board newBoard = board.putPiece(startPiece, x, y, pieceGuardedSquaresCache);
+                tmpBoard.resetTo(board);
+                Board newBoard = board.putPiece(tmpBoard, piecesList.get(pieceNumber), x, y, pieceGuardedSquaresCache);
                 if (newBoard != null) {
-                    List<PieceTypeEnum> piecesList = new LinkedList<>(newPiecesList);
-
                     // to prevent thread pool starving submit tasks only for initial board state
                     if (futures != null) {
-                        futures.add(executor.submit(() -> loop(newBoard, piecesList, counter, pieceGuardedSquaresCache)));
+                        final Board newBoardClone = newBoard.getCopy();
+                        final Board tmpBoardClone = tmpBoard.getCopy();
+                        final Board[] newBoards = new Board[boards.length];
+                        newBoards[0] = board;
+                        newBoards[1] = newBoardClone;
+                        futures.add(executor.submit(() -> loop(newBoards, pieceNumber + 1, tmpBoardClone, piecesList, counter, pieceGuardedSquaresCache)));
                     } else {
-                        loop(newBoard, piecesList, counter, pieceGuardedSquaresCache);
+                        Board newBoardClone = boards[pieceNumber + 1];
+                        if (newBoardClone == null) {
+                            newBoardClone = newBoard.getCopy();
+                        }
+                        newBoardClone.resetTo(newBoard);
+                        boards[pieceNumber + 1] = newBoardClone;
+                        loop(boards, pieceNumber + 1, tmpBoard, piecesList, counter, pieceGuardedSquaresCache);
                     }
                 }
             }

@@ -1,7 +1,6 @@
 package chessproblem;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static chessproblem.PieceTypeEnum.*;
@@ -13,12 +12,16 @@ public class Main {
     }
 
     private static void runTests() {
-        //testCase1();
-        //testCase2();
-        //testCase3();
-        //testCase4();
-        testCase5();
-        //testCase6();
+        testCase1();
+        testCase2();
+        testCase3();
+        testCase4();
+
+        for (int i = 0; i < 100; i++) {
+            testCase5();
+        }
+
+        testCase6();
     }
 
     private static void testCase1() {
@@ -31,14 +34,16 @@ public class Main {
                     .solve();
 
             List<String> expectedResults = new LinkedList<>();
-            expectedResults.add("K x K \nx x x \nx R x \n");
-            expectedResults.add("K x x \nx x R \nK x x \n");
-            expectedResults.add("x R x \nx x x \nK x K \n");
-            expectedResults.add("x x K \nR x x \nx x K \n");
+            expectedResults.add("K . K \n. . . \n. R . \n");
+            expectedResults.add("K . . \n. . R \nK . . \n");
+            expectedResults.add(". R . \n. . . \nK . K \n");
+            expectedResults.add(". . K \nR . . \n. . K \n");
 
-            checkSolutions(results.boards, expectedResults);
+            printResults(getBoardsRepresentation(results.solutions, 3, 3));
+
+            checkSolutions(results.solutions, 3, 3, expectedResults);
             return results;
-        });
+        }, 3, 3);
     }
 
     private static void testCase2() {
@@ -48,18 +53,18 @@ public class Main {
                     .addPieces(Rook, 2).solve();
 
             List<String> expectedResult = new LinkedList<>();
-            expectedResult.add("R x x x \nx N x N \nx x R x \nx N x N \n");
-            expectedResult.add("N x N x \nx R x x \nN x N x \nx x x R \n");
-            expectedResult.add("N x N x \nx x x R \nN x N x \nx R x x \n");
-            expectedResult.add("x R x x \nN x N x \nx x x R \nN x N x \n");
-            expectedResult.add("x x R x \nx N x N \nR x x x \nx N x N \n");
-            expectedResult.add("x x x R \nN x N x \nx R x x \nN x N x \n");
-            expectedResult.add("x N x N \nR x x x \nx N x N \nx x R x \n");
-            expectedResult.add("x N x N \nx x R x \nx N x N \nR x x x \n");
+            expectedResult.add("R . . . \n. N . N \n. . R . \n. N . N \n");
+            expectedResult.add("N . N . \n. R . . \nN . N . \n. . . R \n");
+            expectedResult.add("N . N . \n. . . R \nN . N . \n. R . . \n");
+            expectedResult.add(". R . . \nN . N . \n. . . R \nN . N . \n");
+            expectedResult.add(". . R . \n. N . N \nR . . . \n. N . N \n");
+            expectedResult.add(". . . R \nN . N . \n. R . . \nN . N . \n");
+            expectedResult.add(". N . N \nR . . . \n. N . N \n. . R . \n");
+            expectedResult.add(". N . N \n. . R . \n. N . N \nR . . . \n");
 
-            checkSolutions(results.boards, expectedResult);
+            checkSolutions(results.solutions, 4, 4, expectedResult);
             return results;
-        });
+        }, 4, 4);
     }
 
     private static void testCase3() {
@@ -67,30 +72,30 @@ public class Main {
             System.out.println("Start Test #3");
 
             List<String> expectedResult = new LinkedList<>();
-            expectedResult.add("N . x x \nx x x Q \n. x x x \nx x Q x \n");
-            expectedResult.add("N x . x \n. x x x \nx x x Q \nx Q x x \n");
-            expectedResult.add("x Q x x \nx x x Q \n. x x x \nN x . x \n");
-            expectedResult.add("x Q x x \nx x x . \nQ x x x \nx x . N \n");
-            expectedResult.add("x x Q x \nQ x x x \nx x x . \nx . x N \n");
-            expectedResult.add("x x Q x \n. x x x \nx x x Q \nN . x x \n");
-            expectedResult.add("x x . N \nQ x x x \nx x x . \nx Q x x \n");
-            expectedResult.add("x . x N \nx x x . \nQ x x x \nx x Q x \n");
+            expectedResult.add("N . . . \n. . . Q \n. . . . \n. . Q . \n");
+            expectedResult.add("N . . . \n. . . . \n. . . Q \n. Q . . \n");
+            expectedResult.add(". Q . . \n. . . Q \n. . . . \nN . . . \n");
+            expectedResult.add(". Q . . \n. . . . \nQ . . . \n. . . N \n");
+            expectedResult.add(". . Q . \nQ . . . \n. . . . \n. . . N \n");
+            expectedResult.add(". . Q . \n. . . . \n. . . Q \nN . . . \n");
+            expectedResult.add(". . . N \nQ . . . \n. . . . \n. Q . . \n");
+            expectedResult.add(". . . N \n. . . . \nQ . . . \n. . Q . \n");
 
             Result result = new Solver(4, 4)
                     .addPieces(Queen, 2)
                     .addPieces(Knight, 1).solve();
-            checkSolutions(result.boards, expectedResult);
+            checkSolutions(result.solutions, 4, 4, expectedResult);
 
             return result;
-        });
+        }, 4, 4);
     }
 
     private static void testCase4() {
         runCase("Test #4. 8 Queens", false, () -> {
             Result results = new Solver(8, 8).addPieces(Queen, 8).solve();
-            assert results.boards.size() == 92;
+            assert results.solutions.size() == 92;
             return results;
-        });
+        }, 8, 8);
     }
 
     private static void testCase5() {
@@ -101,43 +106,80 @@ public class Main {
                     .addPieces(Bishop, 2)
                     .addPieces(Knight, 1)
                     .solve();
-            assert results.boards.size() == 3063828;
+            assert results.solutions.size() == 3063828;
             return results;
-        });
+        }, 7, 7);
     }
 
     private static Result testCase6() {
-        return runCase("Test #6", false, () ->
-                new Solver(8, 8)
-                        .addPieces(King, 2)
-                        .addPieces(Queen, 3)
-                        .addPieces(Bishop, 4)
-                        .addPieces(Knight, 1)
-                        .solve());
+        return runCase("Test #6", false, () -> {
+            Result results = new Solver(8, 8)
+                    .addPieces(King, 2)
+                    .addPieces(Queen, 3)
+                    .addPieces(Bishop, 4)
+                    .addPieces(Knight, 1)
+                    .solve();
+            assert results.solutions.size() == 8112968;
+            return results;
+        }, 8, 8);
     }
 
-    private static void checkSolutions(List<Board> solutions, List<String> expectedResults) {
-        assert solutions.stream().map(Board::toString).sorted().reduce((acc, s) -> acc + s)
+    private static void checkSolutions(BoardsSet solutions, int width, int height, List<String> expectedResults) {
+        List<String> boardsList = getBoardsRepresentation(solutions, width, height);
+        assert boardsList.stream().sorted().reduce((acc, s) -> acc + s)
                 .equals(expectedResults.stream().sorted().reduce((acc, s) -> acc + s));
     }
 
-    private static Result runCase(String caseName, boolean showResult, Supplier<Result> run) {
+    private static List<String> getBoardsRepresentation(BoardsSet solutions, int width, int height) {
+        List<String> boardsList = new ArrayList<>();
+        List<Integer> piecesList = new ArrayList<>();
+        solutions.processSolutions((n) -> {
+            if (n.node.pieces != null) {
+                System.out.println("!!! " + n.bitSet.toString());
+                for (int[] pieces : n.node.pieces) {
+                    piecesList.clear();
+                    Collections.addAll(piecesList, Arrays.stream(pieces).boxed().toArray(Integer[]::new));
+                    piecesList.sort((p1, p2) -> Util.getFirstShortFromInt(p1) - Util.getFirstShortFromInt(p2));
+                    StringBuilder sb = new StringBuilder();
+                    int pieceNum = 0;
+                    for (int i = 0; i < width; i++) {
+                        for (int j = 0; j < height; j++) {
+                            int pos = Util.calcArrayPosition(i, j, height);
+                            boolean squattedSquare = n.bitSet.get(pos);
+                            if (squattedSquare) {
+                                //System.out.println(">>> pos = " + pos + " >> " + Arrays.asList(pieces));
+                                PieceTypeEnum pieceType = PieceTypeEnum.values()[Util.getSecondShortFromInt(piecesList.get(pieceNum++))];
+                                sb.append(pieceType.getChar()).append(' ');
+                            } else {
+                                sb.append(". ");
+                            }
+                        }
+                        sb.append("\n");
+                    }
+                    boardsList.add(sb.toString());
+                }
+            }
+        });
+        return boardsList;
+    }
+
+    private static Result runCase(String caseName, boolean showResult, Supplier<Result> run, int width, int height) {
         System.out.println(caseName);
         long start = System.currentTimeMillis();
         Result result = run.get();
         int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
         System.out.printf("Finished '%s'. Results count: %d, Time: %d sec. Loops count: %d\n",
-                caseName, result.boards.size(), durationSec, result.loopsCount);
+                caseName, result.solutions.size(), durationSec, result.loopsCount);
 
         if (showResult) {
-            printResults(result.boards);
+            printResults(getBoardsRepresentation(result.solutions, width, height));
         }
         return result;
     }
 
-    private static void printResults(List<Board> results) {
+    private static void printResults(List<String> results) {
         System.out.println("Results Count = " + results.size());
-        for (Board b : results) {
+        for (String b : results) {
             System.out.print(b);
             System.out.println("===");
         }

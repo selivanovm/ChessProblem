@@ -1,13 +1,11 @@
 package chessproblem;
 
-import java.util.List;
-
 public class Result {
-    public final List<Board> boards;
+    public final BoardsSet solutions;
     public final int loopsCount;
 
-    public Result(List<Board> boards, int loopsCount) {
-        this.boards = boards;
+    public Result(BoardsSet solutions, int loopsCount) {
+        this.solutions = solutions;
         this.loopsCount = loopsCount;
     }
 }

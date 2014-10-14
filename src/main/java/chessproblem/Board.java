@@ -1,6 +1,5 @@
 package chessproblem;
 
-import java.util.Arrays;
 import java.util.BitSet;
 
 public class Board {
@@ -8,14 +7,12 @@ public class Board {
     public final byte height;
 
     // Keeps only squares that have pieces
-    private final BitSet squattedSquares;
+    final BitSet squattedSquares;
     // Keeps both squatted squares and guarded ones
     private final BitSet guardedSquares;
-    // Keeps pieces' positions in the order that pieces were put on the board
-    private final short[] piecesPositions;
-    // Keeps pieces' types in the order that pieces were put on the board
-    private final PieceTypeEnum[] piecesTypes;
-    private final int verticalGuardedLines;
+    // Keeps array of combined position and piece type. First half of bytes for positions, last - for types.
+    final int[] pieces;
+    private int verticalGuardedLines;
     private int piecesOnBoard = 0;
     private final short[] maxPiecePosition;
     private String representation;
@@ -30,35 +27,31 @@ public class Board {
         this.squattedSquares = new BitSet(this.width * this.height);
         this.guardedSquares = new BitSet(this.width * this.height);
         this.verticalGuardedLines = 0;
-        this.piecesPositions = new short[piecesNumber];
+        this.pieces = new int[piecesNumber];
         for (int i = 0; i < piecesNumber; i++) {
-            this.piecesPositions[i] = -1;
+            pieces[i] = -1;
         }
-        this.piecesTypes = new PieceTypeEnum[piecesNumber];
         this.maxPiecePosition = new short[PieceTypeEnum.values().length];
     }
 
-    /**
-     * This constructor is used when new piece is added on the board.
-     */
-    private Board(Board oldBoard, BitSet newSquattedSquares, BitSet newGuardedSquares, int newVGLines,
-                  short[] newPiecesPositions, PieceTypeEnum[] newPiecesTypes, int newPiecesOnBoard, short[] newMaxPiecePosition) {
-        this.width = oldBoard.width;
-        this.height = oldBoard.height;
-        this.squattedSquares = newSquattedSquares;
-        this.guardedSquares = newGuardedSquares;
-        this.verticalGuardedLines = newVGLines;
-        this.piecesOnBoard = newPiecesOnBoard;
-        this.piecesPositions = newPiecesPositions;
-        this.piecesTypes = newPiecesTypes;
-        this.maxPiecePosition = newMaxPiecePosition;
+    private Board(byte width, byte height, BitSet squattedSquares, BitSet guardedSquares,
+                  int[] pieces, int verticalGuardedLines,
+                  int piecesOnBoard, short[] maxPiecePosition) {
+        this.width = width;
+        this.height = height;
+        this.squattedSquares = squattedSquares;
+        this.guardedSquares = guardedSquares;
+        this.pieces = pieces;
+        this.verticalGuardedLines = verticalGuardedLines;
+        this.piecesOnBoard = piecesOnBoard;
+        this.maxPiecePosition = maxPiecePosition;
     }
 
     /**
      * Put piece on board, check if it attacks some other pieces, if it doesn't then return board with a new state,
      * otherwise return null.
      */
-    public Board putPiece(PieceTypeEnum piece, int x, int y, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
+    public Board putPiece(Board tmpBoard, PieceTypeEnum piece, int x, int y, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         int piecePosition = Util.calcArrayPosition(x, y, height);
         boolean squareState = guardedSquares.get(piecePosition);
         boolean alreadyCheckedThisPosition = maxPiecePosition[piece.ordinal()] > piecePosition;
@@ -67,39 +60,52 @@ public class Board {
         } else {
             BitSet squaresGuardedByPiece = pieceGuardedSquaresCache.getGuardedSquares(piece, x, y);
 
-            BitSet newSquattedSquares = (BitSet) squattedSquares.clone();
-            newSquattedSquares.and(squaresGuardedByPiece);
-            boolean existentPieceUnderAttack = newSquattedSquares.cardinality() != 0;
+            tmpBoard.squattedSquares.and(squaresGuardedByPiece);
+            boolean existentPieceUnderAttack = tmpBoard.squattedSquares.cardinality() != 0;
             if (existentPieceUnderAttack) {
                 return null;
             } else {
-                newSquattedSquares = (BitSet) squattedSquares.clone();
-                newSquattedSquares.set(piecePosition);
+                tmpBoard.squattedSquares.and(squattedSquares);
+                tmpBoard.squattedSquares.or(squattedSquares);
+                tmpBoard.squattedSquares.set(piecePosition);
 
-                BitSet newGuardedSquares = (BitSet) guardedSquares.clone();
-                newGuardedSquares.or(squaresGuardedByPiece);
-                newGuardedSquares.set(piecePosition);
+                tmpBoard.guardedSquares.or(squaresGuardedByPiece);
+                tmpBoard.guardedSquares.set(piecePosition);
 
-                short[] newPiecesPositions = piecesPositions.clone();
-                newPiecesPositions[piecesOnBoard] = (short) piecePosition;
-
-                PieceTypeEnum[] newPiecesTypes = piecesTypes.clone();
-                newPiecesTypes[piecesOnBoard] = piece;
-
-                short[] newMaxPiecePosition = maxPiecePosition.clone();
-                newMaxPiecePosition[piece.ordinal()] = (short) piecePosition;
+//                System.out.println(">>> " + tmpBoard.piecesPositions.length + " >> " + piecesOnBoard);
+                int positionAndType = Util.packShortsToInt((short) piecePosition, (short) piece.ordinal());
+                tmpBoard.pieces[piecesOnBoard] = positionAndType;
+                tmpBoard.maxPiecePosition[piece.ordinal()] = (short) piecePosition;
 
                 // Mark guarded vertical line if needed
-                int newVGLines = this.verticalGuardedLines;
                 if (piece.isGuardLines()) {
-                    newVGLines = setVerticalGuardedLine(x);
+                    tmpBoard.verticalGuardedLines = setVerticalGuardedLine(x);
                 }
-                return new Board(this, newSquattedSquares, newGuardedSquares, newVGLines,
-                        newPiecesPositions, newPiecesTypes, piecesOnBoard + 1, newMaxPiecePosition);
+                tmpBoard.piecesOnBoard++;
+                return tmpBoard;
             }
         }
     }
 
+    public void resetTo(Board board) {
+        squattedSquares.and(board.squattedSquares);
+        squattedSquares.or(board.squattedSquares);
+
+        guardedSquares.and(board.guardedSquares);
+        guardedSquares.or(board.guardedSquares);
+
+        System.arraycopy(board.pieces, 0, pieces, 0, pieces.length);
+
+        verticalGuardedLines = board.verticalGuardedLines;
+        piecesOnBoard = board.piecesOnBoard;
+
+        System.arraycopy(board.maxPiecePosition, 0, maxPiecePosition, 0, maxPiecePosition.length);
+    }
+
+    public Board getCopy() {
+        return new Board(width, height, (BitSet) squattedSquares.clone(), (BitSet) guardedSquares.clone(),
+                pieces.clone(), verticalGuardedLines, piecesOnBoard, maxPiecePosition.clone());
+    }
 
     String getStringRepresentation() {
         if (representation == null) {
@@ -109,9 +115,8 @@ public class Board {
                     int pos = Util.calcArrayPosition(i, j, height);
                     boolean squattedSquare = guardedSquares.get(pos);
                     if (squattedSquare) {
-                        int pieceNum = getPieceNumByPosition(pos);
-                        if (pieceNum > -1) {
-                            PieceTypeEnum pieceType = piecesTypes[pieceNum];
+                        PieceTypeEnum pieceType = getPieceTypeByPosition(pos);
+                        if (pieceType != null) {
                             sb.append(pieceType.getChar()).append(' ');
                         } else {
                             sb.append("x ");
@@ -127,73 +132,15 @@ public class Board {
         return representation;
     }
 
-    private int getPieceNumByPosition(int pos) {
-        int pieceNum = -1;
-        for (int p = 0; p < piecesPositions.length; p++) {
-            if (piecesPositions[p] == pos) {
-                pieceNum = p;
+    private PieceTypeEnum getPieceTypeByPosition(int pos) {
+        PieceTypeEnum pieceType = null;
+        for (int p = 0; p < pieces.length; p++) {
+            if (Util.getFirstShortFromInt(pieces[p]) == pos) {
+                pieceType = PieceTypeEnum.values()[Util.getSecondShortFromInt(p)];
                 break;
             }
         }
-        return pieceNum;
-    }
-
-    /**
-     * Used only for putting solution into result map.
-     * On incomplete solution will raise NPE, since piecesTypes contains nulls
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Board board = (Board) o;
-
-        if (!squattedSquares.equals(board.squattedSquares)) return false;
-        if (piecesPositions.length != board.piecesPositions.length) return false;
-        if (piecesTypes.length != board.piecesTypes.length) return false;
-
-        return comparePieceTypesAndPositions(board);
-    }
-
-    /**
-     * Used only for putting solution into result map.
-     */
-    @Override
-    public int hashCode() {
-        int result = squattedSquares.hashCode();
-
-        short[] piecesPositionsCopy = piecesPositions.clone();
-        Arrays.sort(piecesPositionsCopy);
-        result = 31 * result + Arrays.hashCode(piecesPositionsCopy);
-
-        PieceTypeEnum[] piecesTypesCopy = piecesTypes.clone();
-        Arrays.sort(piecesTypesCopy);
-        result = 31 * result + Arrays.hashCode(piecesTypesCopy);
-
-        return result;
-    }
-
-    private boolean comparePieceTypesAndPositions(Board board) {
-        boolean positionAndTypesAreEqual = true;
-        for (int i = 0; i < piecesOnBoard; i++) {
-            short pos = piecesPositions[i];
-            int posIndex = board.searchPositionIndex(pos);
-            if (!(posIndex > -1 && piecesTypes[i] == board.piecesTypes[posIndex])) {
-                positionAndTypesAreEqual = false;
-                break;
-            }
-        }
-        return positionAndTypesAreEqual;
-    }
-
-    private int searchPositionIndex(short position) {
-        for (int i = 0; i < piecesOnBoard; i++) {
-            if (this.piecesPositions[i] == position) {
-                return i;
-            }
-        }
-        return -1;
+        return pieceType;
     }
 
     @Override

@@ -15,4 +15,16 @@ public class Util {
         return x * height + y;
     }
 
+    public static int packShortsToInt(short s1, short s2) {
+        return ((s1 << 16) | s2);
+    }
+
+    public static short getFirstShortFromInt(int i) {
+        return (short) (i >> 16);
+    }
+
+    public static short getSecondShortFromInt(int i) {
+        return (short) (i & 0x0000FFFF);
+    }
+
 }
