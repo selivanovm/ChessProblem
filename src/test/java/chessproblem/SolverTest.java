@@ -9,6 +9,26 @@ import static org.junit.Assert.assertEquals;
 
 public class SolverTest {
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testSolveWithZeroPieces() throws Exception {
+        new Solver(7, 7).solve();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSolveWithZeroSizeBoard() throws Exception {
+        new Solver(7, 0).addPieces(King, 2).solve();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSolveWithTooBigBoard() throws Exception {
+        new Solver(128, 10).addPieces(King, 2).solve();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSolveWithNegativeBoardSide() throws Exception {
+        new Solver(128, -10).addPieces(King, 2).solve();
+    }
+
     @Test
     public void testSolveCase3x3R1K2() throws Exception {
         Result results = new Solver(3, 3)
@@ -172,11 +192,6 @@ public class SolverTest {
                 .addPieces(Knight, 1)
                 .solve();
         assertEquals("Incorrect solution size", 8112968, results.solutions.size());
-    }
-
-    @Test
-    public void testAddPieces() throws Exception {
-
     }
 
     private static List<String> getBoardsRepresentation(BoardsSet solutions, int width, int height) {

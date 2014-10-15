@@ -3,6 +3,8 @@ package chessproblem;
 import java.util.BitSet;
 
 public class Board {
+    public static final int MAX_BOARD_SIDE_SIZE = 127;
+
     public final byte width;
     public final byte height;
 

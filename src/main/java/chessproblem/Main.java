@@ -21,17 +21,19 @@ public class Main {
             boolean allOptionsDefined = commandLine.hasOption("bw") && commandLine.hasOption("bh") && commandLine.hasOption("ps");
             if (allOptionsDefined) {
                 Integer boardWidth = Util.parseInt(commandLine.getOptionValue("bw"));
-                checkParameter("Board width should be a number in range 1-255.", boardWidth);
-
                 Integer boardHeight = Util.parseInt(commandLine.getOptionValue("bh"));
-                checkParameter("Board height should be a number in range 1-255.", boardHeight);
 
                 String piecesSet = commandLine.getOptionValue("ps");
                 String[] pieceDefinitionStrings = piecesSet.split("-");
 
                 Solver solver = new Solver(boardWidth, boardHeight);
                 initSolver(pieceDefinitionStrings, solver);
-                solver.solve();
+                try {
+                    solver.solve();
+                } catch (IllegalArgumentException e) {
+                    System.out.println(e.getMessage());
+                    printUsage(options);
+                }
             } else {
                 printUsage(options);
             }
@@ -46,7 +48,7 @@ public class Main {
         options.addOption("bh", "board-height", true, "Board height: number in range 1-255");
         options.addOption("ps", "pieces-set", true,
                 "Pieces set in the following format: \"K1-Q1-R1-B2-N3\". " +
-                        "Where character corresponds to the piece type and number to number of pieces of corresponding type. " +
+                        "Where character signifies the piece type and number is a number of pieces of this type. " +
                         "In the example we have: K1 - one king, Q1 - one queen, R1 - one rook, B2 - two bishops and N3 - three knights.");
         return options;
     }
@@ -66,12 +68,6 @@ public class Main {
                 parameterValidationError("Invalid piece definition format: " + pieceDef);
             }
         });
-    }
-
-    private static void checkParameter(String s, Integer number) {
-        if (number == null) {
-            parameterValidationError(s);
-        }
     }
 
     private static void parameterValidationError(String s) {

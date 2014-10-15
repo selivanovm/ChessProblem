@@ -29,22 +29,15 @@ public class Solver {
     private final int boardHeight;
 
     public Solver(int boardWidth, int boardHeight) {
-        if (boardWidth < 0 || boardWidth > 255) {
-            throw new IllegalArgumentException("Board width should be in range 1-255.");
-        }
-        if (boardHeight < 0 || boardHeight > 255) {
-            throw new IllegalArgumentException("Board height should be in range 1-255.");
-        }
-
         this.boardWidth = boardWidth;
         this.boardHeight = boardHeight;
     }
 
     public Result solve() {
+        checkInputData();
+
         logger.info("Start solving: board {}x{}, pieces = [{}]", this.boardWidth, this.boardHeight, getBoardPiecesString());
-
         long start = System.currentTimeMillis();
-
         this.started = true;
         List<PieceTypeEnum> sortedPieces =
                 new ArrayList<>(this.pieces.stream().sorted((p1, p2) -> p1.ordinal() - p2.ordinal()).collect(Collectors.toList()));
@@ -62,6 +55,23 @@ public class Solver {
         int durationSec = (int) (System.currentTimeMillis() - start) / 1000;
         logger.info("Operation took {} sec. Found {} solutions. Run {} loops.", durationSec, solutionsSet.size(), counter.get());
         return new Result(solutionsSet, counter.get());
+    }
+
+    private void checkInputData() {
+        if (boardWidth < 1 || boardWidth > Board.MAX_BOARD_SIDE_SIZE) {
+            throw new IllegalArgumentException(String.format("Board width should be in range 1-%d.", Board.MAX_BOARD_SIDE_SIZE));
+        }
+        if (boardHeight < 1 || boardHeight > Board.MAX_BOARD_SIDE_SIZE) {
+            throw new IllegalArgumentException(String.format("Board height should be in range 1-%d.", Board.MAX_BOARD_SIDE_SIZE));
+        }
+
+        if (pieces.isEmpty()) {
+            throw new IllegalArgumentException("Pieces count should be positive.");
+        }
+
+        if (pieces.size() >= boardWidth * boardHeight) {
+            throw new IllegalArgumentException("Pieces count should be less than board size.");
+        }
     }
 
     private String getBoardPiecesString() {
