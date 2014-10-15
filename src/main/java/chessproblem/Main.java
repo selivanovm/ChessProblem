@@ -27,8 +27,8 @@ public class Main {
                 String[] pieceDefinitionStrings = piecesSet.split("-");
 
                 Solver solver = new Solver(boardWidth, boardHeight);
-                initSolver(pieceDefinitionStrings, solver);
                 try {
+                    initSolver(pieceDefinitionStrings, solver);
                     solver.solve();
                 } catch (IllegalArgumentException e) {
                     System.out.println(e.getMessage());

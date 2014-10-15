@@ -1,5 +1,6 @@
 package chessproblem;
 
+import java.util.Arrays;
 import java.util.BitSet;
 
 public class Board {
@@ -111,7 +112,7 @@ public class Board {
         return Util.isBitSet(verticalGuardedLines, x);
     }
 
-    int setVerticalGuardedLine(int x) {
+    private int setVerticalGuardedLine(int x) {
         return Util.setBit(verticalGuardedLines, x);
     }
 
@@ -119,4 +120,35 @@ public class Board {
         return piecesOnBoard == 0;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Board board = (Board) o;
+
+        if (height != board.height) return false;
+        if (piecesOnBoard != board.piecesOnBoard) return false;
+        if (verticalGuardedLines != board.verticalGuardedLines) return false;
+        if (width != board.width) return false;
+        if (!guardedSquares.equals(board.guardedSquares)) return false;
+        if (!Arrays.equals(maxPiecePosition, board.maxPiecePosition)) return false;
+        if (!Arrays.equals(pieces, board.pieces)) return false;
+        if (!squattedSquares.equals(board.squattedSquares)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) width;
+        result = 31 * result + (int) height;
+        result = 31 * result + squattedSquares.hashCode();
+        result = 31 * result + guardedSquares.hashCode();
+        result = 31 * result + Arrays.hashCode(pieces);
+        result = 31 * result + verticalGuardedLines;
+        result = 31 * result + piecesOnBoard;
+        result = 31 * result + Arrays.hashCode(maxPiecePosition);
+        return result;
+    }
 }

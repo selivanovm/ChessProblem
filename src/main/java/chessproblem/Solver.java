@@ -167,7 +167,7 @@ public class Solver {
     private void checkForRepeatedPieces(PieceTypeEnum pieceType) {
         Stream<PieceTypeEnum> existentPiecesOfSameType = pieces.stream().filter((p -> p == pieceType));
         if (existentPiecesOfSameType.iterator().hasNext()) {
-            throw new RuntimeException("Pieces of type '" + pieceType.name() + "' are already added.");
+            throw new IllegalArgumentException("Pieces of type '" + pieceType.name() + "' were added more than once.");
         }
     }
 
