@@ -32,6 +32,7 @@ public class Main {
                     solver.solve();
                 } catch (IllegalArgumentException e) {
                     System.out.println(e.getMessage());
+                    System.out.println();
                     printUsage(options);
                 }
             } else {
@@ -44,8 +45,8 @@ public class Main {
 
     private static Options getOptions() {
         Options options = new Options();
-        options.addOption("bw", "board-width", true, "Board width: number in range 1-255");
-        options.addOption("bh", "board-height", true, "Board height: number in range 1-255");
+        options.addOption("bw", "board-width", true, String.format("Board width: number in range 1-%d", Board.MAX_BOARD_SIDE_SIZE));
+        options.addOption("bh", "board-height", true, String.format("Board height: number in range 1-%d", Board.MAX_BOARD_SIDE_SIZE));
         options.addOption("ps", "pieces-set", true,
                 "Pieces set in the following format: \"K1-Q1-R1-B2-N3\". " +
                         "Where character signifies the piece type and number is a number of pieces of this type. " +
