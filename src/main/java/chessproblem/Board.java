@@ -17,7 +17,6 @@ public class Board {
     private int verticalGuardedLines;
     private int piecesOnBoard = 0;
     private final short[] maxPiecePosition;
-    private String representation;
 
 
     /**
@@ -106,47 +105,6 @@ public class Board {
     public Board getCopy() {
         return new Board(width, height, (BitSet) squattedSquares.clone(), (BitSet) guardedSquares.clone(),
                 pieces.clone(), verticalGuardedLines, piecesOnBoard, maxPiecePosition.clone());
-    }
-
-    String getStringRepresentation() {
-        if (representation == null) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    int pos = Util.calcArrayPosition(i, j, height);
-                    boolean squattedSquare = guardedSquares.get(pos);
-                    if (squattedSquare) {
-                        PieceTypeEnum pieceType = getPieceTypeByPosition(pos);
-                        if (pieceType != null) {
-                            sb.append(pieceType.getChar()).append(' ');
-                        } else {
-                            sb.append("x ");
-                        }
-                    } else {
-                        sb.append(". ");
-                    }
-                }
-                sb.append("\n");
-            }
-            representation = sb.toString();
-        }
-        return representation;
-    }
-
-    private PieceTypeEnum getPieceTypeByPosition(int pos) {
-        PieceTypeEnum pieceType = null;
-        for (int p = 0; p < pieces.length; p++) {
-            if (Util.getFirstShortFromInt(pieces[p]) == pos) {
-                pieceType = PieceTypeEnum.values()[Util.getSecondShortFromInt(p)];
-                break;
-            }
-        }
-        return pieceType;
-    }
-
-    @Override
-    public String toString() {
-        return getStringRepresentation();
     }
 
     public boolean isVerticalLineGuarded(int x) {
