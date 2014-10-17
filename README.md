@@ -23,7 +23,10 @@ Solves multiple unguard arrangements problem.
 ### Example
 
 ```shell
-./chess-problem.sh -bh 8 -bw 4 -ps K1-Q1-R1-B2-N3
+$ ./chess-problem.sh -bh 8 -bw 4 -ps K1-Q1-R1-B2-N3
+04:48:47.743 [main] INFO  c.Solver - Start solving: board 4x8, pieces = [King, Queen, Rook, Bishop, Bishop, Knight, Knight, Knight]
+04:48:47.992 [main] INFO  c.Solver - Operation took 0 sec. Found 9012 solutions. Run 91121 loops.
+
 ```
 
 
