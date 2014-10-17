@@ -2,8 +2,6 @@ package chessproblem;
 
 public class Util {
 
-
-
     public static boolean isBitSet(int x, int pos) {
         return (x & (1 << pos)) != 0;
     }

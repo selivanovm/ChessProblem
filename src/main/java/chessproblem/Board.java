@@ -15,7 +15,6 @@ public class Board {
     private final BitSet guardedSquares;
     // Keeps array of combined position and piece type. First half of bytes for positions, last - for types.
     final int[] pieces;
-    private int verticalGuardedLines;
     private int piecesOnBoard = 0;
     private final short[] maxPiecePosition;
 
@@ -28,7 +27,6 @@ public class Board {
         this.height = height;
         this.squattedSquares = new BitSet(this.width * this.height);
         this.guardedSquares = new BitSet(this.width * this.height);
-        this.verticalGuardedLines = 0;
         this.pieces = new int[piecesNumber];
         for (int i = 0; i < piecesNumber; i++) {
             pieces[i] = -1;
@@ -37,14 +35,12 @@ public class Board {
     }
 
     private Board(byte width, byte height, BitSet squattedSquares, BitSet guardedSquares,
-                  int[] pieces, int verticalGuardedLines,
-                  int piecesOnBoard, short[] maxPiecePosition) {
+                  int[] pieces, int piecesOnBoard, short[] maxPiecePosition) {
         this.width = width;
         this.height = height;
         this.squattedSquares = squattedSquares;
         this.guardedSquares = guardedSquares;
         this.pieces = pieces;
-        this.verticalGuardedLines = verticalGuardedLines;
         this.piecesOnBoard = piecesOnBoard;
         this.maxPiecePosition = maxPiecePosition;
     }
@@ -52,6 +48,13 @@ public class Board {
     /**
      * Put piece on board, check if it attacks some other pieces, if it doesn't then return board with a new state,
      * otherwise return null.
+     *
+     * @param tmpBoard board that will represent original board and new piece on it
+     * @param piece piece to be put on board
+     * @param x column number of new piece
+     * @param y row number where of new piece
+     * @param pieceGuardedSquaresCache cache that keeps guarded squares bit masks for each of piece type and every square
+     *                                 on the board
      */
     public Board putPiece(Board tmpBoard, PieceTypeEnum piece, int x, int y, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         int piecePosition = Util.calcArrayPosition(x, y, height);
@@ -78,10 +81,6 @@ public class Board {
                 tmpBoard.pieces[piecesOnBoard] = positionAndType;
                 tmpBoard.maxPiecePosition[piece.ordinal()] = (short) piecePosition;
 
-                // Mark guarded vertical line if needed
-                if (piece.isGuardLines()) {
-                    tmpBoard.verticalGuardedLines = setVerticalGuardedLine(x);
-                }
                 tmpBoard.piecesOnBoard++;
                 return tmpBoard;
             }
@@ -97,7 +96,6 @@ public class Board {
 
         System.arraycopy(board.pieces, 0, pieces, 0, pieces.length);
 
-        verticalGuardedLines = board.verticalGuardedLines;
         piecesOnBoard = board.piecesOnBoard;
 
         System.arraycopy(board.maxPiecePosition, 0, maxPiecePosition, 0, maxPiecePosition.length);
@@ -105,15 +103,7 @@ public class Board {
 
     public Board getCopy() {
         return new Board(width, height, (BitSet) squattedSquares.clone(), (BitSet) guardedSquares.clone(),
-                pieces.clone(), verticalGuardedLines, piecesOnBoard, maxPiecePosition.clone());
-    }
-
-    public boolean isVerticalLineGuarded(int x) {
-        return Util.isBitSet(verticalGuardedLines, x);
-    }
-
-    private int setVerticalGuardedLine(int x) {
-        return Util.setBit(verticalGuardedLines, x);
+                pieces.clone(), piecesOnBoard, maxPiecePosition.clone());
     }
 
     public boolean isEmpty() {
@@ -129,7 +119,6 @@ public class Board {
 
         if (height != board.height) return false;
         if (piecesOnBoard != board.piecesOnBoard) return false;
-        if (verticalGuardedLines != board.verticalGuardedLines) return false;
         if (width != board.width) return false;
         if (!guardedSquares.equals(board.guardedSquares)) return false;
         if (!Arrays.equals(maxPiecePosition, board.maxPiecePosition)) return false;
@@ -146,7 +135,6 @@ public class Board {
         result = 31 * result + squattedSquares.hashCode();
         result = 31 * result + guardedSquares.hashCode();
         result = 31 * result + Arrays.hashCode(pieces);
-        result = 31 * result + verticalGuardedLines;
         result = 31 * result + piecesOnBoard;
         result = 31 * result + Arrays.hashCode(maxPiecePosition);
         return result;

@@ -102,38 +102,35 @@ public class Solver {
             solutionsSet.addBoard(board);
         } else {
             for (int x = 0; x < board.width; x++) {
-                traverseRows(boards, pieceNumber, tmpBoard, counter, piecesList, x, pieceGuardedSquaresCache);
+                traverseColumn(boards, pieceNumber, tmpBoard, counter, piecesList, x, pieceGuardedSquaresCache);
             }
         }
     }
 
-    private void traverseRows(Board[] boards, int pieceNumber, Board tmpBoard, AtomicInteger counter, List<PieceTypeEnum> piecesList,
-                              int x, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
+    private void traverseColumn(Board[] boards, int pieceNumber, Board tmpBoard, AtomicInteger counter, List<PieceTypeEnum> piecesList,
+                                int x, PieceGuardedSquaresCache pieceGuardedSquaresCache) {
         Board board = boards[pieceNumber];
 
         List<Future<?>> futures = board.isEmpty() ? new LinkedList<>() : null;
-        if (!board.isVerticalLineGuarded(x)) {
-            for (int y = 0; y < board.height; y++) {
-                tmpBoard.resetTo(board);
-                Board newBoard = board.putPiece(tmpBoard, piecesList.get(pieceNumber), x, y, pieceGuardedSquaresCache);
-                if (newBoard != null) {
-                    // to prevent thread pool starving submit tasks only for initial board state
-                    if (futures != null) {
-                        final Board newBoardClone = newBoard.getCopy();
-                        final Board tmpBoardClone = tmpBoard.getCopy();
-                        final Board[] newBoards = new Board[boards.length];
-                        newBoards[0] = board;
-                        newBoards[1] = newBoardClone;
-                        futures.add(executor.submit(() -> loop(newBoards, pieceNumber + 1, tmpBoardClone, piecesList, counter, pieceGuardedSquaresCache)));
-                    } else {
-                        Board newBoardClone = boards[pieceNumber + 1];
-                        if (newBoardClone == null) {
-                            newBoardClone = newBoard.getCopy();
-                        }
-                        newBoardClone.resetTo(newBoard);
-                        boards[pieceNumber + 1] = newBoardClone;
-                        loop(boards, pieceNumber + 1, tmpBoard, piecesList, counter, pieceGuardedSquaresCache);
+        for (int y = 0; y < board.height; y++) {
+            tmpBoard.resetTo(board);
+            Board newBoard = board.putPiece(tmpBoard, piecesList.get(pieceNumber), x, y, pieceGuardedSquaresCache);
+            if (newBoard != null) {
+                // to prevent thread pool starvation submit tasks only for pristine board state
+                if (futures != null) {
+                    final Board newBoardClone = newBoard.getCopy();
+                    final Board[] newBoards = new Board[boards.length];
+                    newBoards[0] = board;
+                    newBoards[1] = newBoardClone;
+                    futures.add(executor.submit(() -> loop(newBoards, pieceNumber + 1, tmpBoard.getCopy(), piecesList, counter, pieceGuardedSquaresCache)));
+                } else {
+                    Board newBoardClone = boards[pieceNumber + 1];
+                    if (newBoardClone == null) {
+                        newBoardClone = newBoard.getCopy();
                     }
+                    newBoardClone.resetTo(newBoard);
+                    boards[pieceNumber + 1] = newBoardClone;
+                    loop(boards, pieceNumber + 1, tmpBoard, piecesList, counter, pieceGuardedSquaresCache);
                 }
             }
         }

@@ -18,10 +18,6 @@ public enum PieceTypeEnum {
         }
     }
 
-    public boolean isGuardLines() {
-        return this == Queen || this == Rook;
-    }
-
     public static Optional<PieceTypeEnum> getByChar(char c) {
         return Arrays.asList(PieceTypeEnum.values()).stream().filter((pieceType) -> pieceType.getChar() == c).findFirst();
     }

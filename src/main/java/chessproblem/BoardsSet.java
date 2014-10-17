@@ -6,6 +6,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+/**
+ * Keeps boards configurations in compact way, each node of binary tree corresponds to non-empty
+ * boards square. Each leaf path is a bit representation of all board's non-empty squares.
+ * Each leaf node contains list of pieces configurations, e.g. if we have leaf path 0110 for 2x2 board
+ * and piece configuration [Bishop, Bishop] it means that we have this kind of board:
+ * row\col   0  1
+ *       0   .  B
+ *       1   B  .
+ */
 public class BoardsSet {
 
     private final AtomicInteger nodesCount = new AtomicInteger();
