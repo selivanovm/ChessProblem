@@ -1,13 +1,32 @@
 ChessProblem
 ============
 
-The program solves multiple unguard arrangements problem.
+The program solves multiple unguard chess pieces arrangements problem.
 
-Dependencies: JRE 1.8, Gradle 2
+Dependencies: JRE 1.8
 
-To run the app install Gradle(http://www.gradle.org/downloads) and type into console:
+### How to run
 
-$ gradle run
+In Unix like OS use chess-problem.sh script, in Windows chess-problem.bat.
+Being run with no arguments script shows usage:
+
+```shell
+usage: chess-problem [-bh <arg>] [-bw <arg>] [-ps <arg>]
+Solves multiple unguard arrangements problem.
+ -bh,--board-height <arg>   Board height: number in range 1-127
+ -bw,--board-width <arg>    Board width: number in range 1-127
+ -ps,--pieces-set <arg>     Pieces set in the following format: "K1-Q1-R1-B2-N3". Where character signifies the piece
+                            type and number is a number of pieces of this type. In the example we have: K1 - one king,
+                            Q1 - one queen, R1 - one rook, B2 - two bishops and N3 - three knights.
+```
+
+### Example
+
+```shell
+./chess-problem.sh -bh 8 -bw 4 -ps K1-Q1-R1-B2-N3
+```
+
+
 
 
 
