@@ -70,19 +70,6 @@ public class BoardTest {
     }
 
     @Test
-    public void testIsVerticalLineGuarded() throws Exception {
-        Board board1 = new Board((byte) 2, (byte) 2, 2);
-        assertTrue("Board should be empty", board1.isEmpty());
-        assertFalse("Empty board shouldn't have guarded lines", board1.isVerticalLineGuarded(0));
-        assertFalse("Empty board shouldn't have guarded lines", board1.isVerticalLineGuarded(1));
-
-        Board board2 = board1.getCopy();
-        board1.putPiece(board2, PieceTypeEnum.Rook, 1, 0, pieceGuardedSquaresCache);
-        assertFalse("Board shouldn't have first column guarded", board2.isVerticalLineGuarded(0));
-        assertTrue("Board should have second column guarded", board2.isVerticalLineGuarded(1));
-    }
-
-    @Test
     public void testIsEmpty() throws Exception {
         Board board = new Board((byte) 1, (byte) 2, 3);
         assertTrue("New board should be empty", board.isEmpty());
